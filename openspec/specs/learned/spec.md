@@ -391,13 +391,12 @@ def predict(self, x):
 | `paper/chapters/ch6-conclusion.tex` | M6 Ch6 | 总结展望，1694字，3局限+5未来 |
 | `paper/refs.bib` | M6 参考文献 | 9 条（NSL-KDD, sklearn, PyTorch, SMOTE, 3中文）|
 | `paper/slides_outline.md` | M6 PPT提纲 | 15 slides，15张图引用 |
-| `paper/cjc-main.tex` | M7 CJC 模板主文件 | \classsetup 元数据 + 6章 + 补充模块 |
-| `paper/cjc.cls` | M7 CJC 文档类 | 已打课程作业补丁（去除 CLC/DOI/日期） |
+| `paper/cjc-main.tex` | M7 CJC 模板主文件 | 作者：刘卫/查恩鹏/陈安旭，青海大学；去除通信作者/期刊顶栏 |
+| `paper/cjc.cls` | M7 CJC 文档类 | 已打课程作业补丁（去除 CLC/DOI/日期/通信作者） |
 | `paper/cjc.bst` | M7 CJC 参考文献格式 | 顺序引用，number=卷/volume=期 |
-| `paper/cjc-refs.bib` | M7 CJC 格式参考文献 | 9条，volume/number字段已适配 |
+| `paper/cjc-refs.bib` | M7 CJC 格式参考文献 | 19条（新增长篇引用 10 条），volume/number字段已适配 |
 | `paper/background.tex` | M7 英文背景 | ~400词，background 环境 |
-| `paper/algorithm.tex` | M7 算法伪代码 | 2个算法：实验总流程 + 训练评估循环 |
-| `paper/appendix.tex` | M7 附录 | 3节：超参数表 + SMOTE对比 + Top-20特征 |
+| `paper/appendix.tex` | M7 附录 | 3节：超参数表 + SMOTE对比 + Top-20特征，引用已硬编码 |
 | `README.md` | 项目指南 | 252行，5步复现流程 |
 
 ## 踩坑档案

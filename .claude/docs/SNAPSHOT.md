@@ -61,11 +61,10 @@ wg/
 │   │   ├── latexmkrc             # M7 latexmk 配置
 │   │   ├── Makefile              # M7 双模式编译（main + cjc）
 │   │   ├── refs.bib              # M6 参考文献（unsrt，保留）
-│   │   ├── cjc-refs.bib          # M7 CJC 格式参考文献（新）
-│   │   ├── chapters/             # 6 个章节 .tex（M7 已迁移至单栏）
+│   │   ├── cjc-refs.bib          # M7 CJC 格式参考文献（19 条：9 原有 + 10 新增）
+│   │   ├── chapters/             # 6 个章节 .tex（图1-8/10/13-16 双栏，图9/11/12 单栏）
 │   │   ├── background.tex        # M7 英文背景介绍 (~400 词)
-│   │   ├── algorithm.tex         # M7 实验流程伪代码
-│   │   ├── appendix.tex          # M7 附录（超参数/SMOTE/特征排名）
+│   │   ├── appendix.tex          # M7 附录（超参数/SMOTE/特征排名，引用已硬编码）
 │   │   └── slides_outline.md     # 15 页答辩 PPT 提纲
 │   └── utils/                # 通用工具
 ├── tests/                    # M1+M2+M3+M4 pytest 测试
@@ -141,9 +140,8 @@ wg/
 
 - **仓库状态**: ✅ 已初始化
 - **当前分支**: main
-- **最近提交**: 4bc066e — chore(m6): archive M6 OpenSpec change + update docs
-- **未提交变更**: M7 CJC LaTeX 模板排版（cjc-main.tex + 6章迁移 + 3补充模块 + cjc.cls 课程作业适配）
-- **项目状态**: M1-M7 全部完成 ✅（7/7 里程碑），XeLaTeX 编译通过
+- **最近提交**: 58237a8 — fix(m7): polish paper（引用补充、排版修正、作者信息）
+- **项目状态**: M1-M7 全部完成 ✅（7/7 里程碑），XeLaTeX 编译通过，终稿润色完成
 
 ---
 
