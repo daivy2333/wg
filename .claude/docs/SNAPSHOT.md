@@ -1,6 +1,7 @@
 # SNAPSHOT.md — 项目状态快照
 
 > Last Updated: 2026-06-14
+> M1 阶段已完成（任务 1.4-1.8 全 ✅）
 
 ---
 
@@ -14,15 +15,25 @@ wg/
 ├── openspec/
 │   ├── config.yaml           # OpenSpec 项目配置
 │   ├── changes/              # 变更提案目录
+│   │   └── m1-infrastructure/  # M1 变更（待归档）
 │   └── specs/
 │       ├── architecture/     # 架构决策记录
 │       ├── learned/          # 学习记忆
 │       ├── references/       # 外部参考
 │       └── optimization/     # 优化记录
-├── .claude/
-│   └── docs/
-│       ├── SNAPSHOT.md       # 本文件
-│       └── tasks.md          # 任务追踪
+├── src/                      # M1 新增 - 代码骨架
+│   ├── data/
+│   │   ├── loader.py         # KDDTrain+/KDDTest+ 加载
+│   │   └── preprocessor.py   # 编码 + 标准化 + 整合管线
+│   ├── models/               # M3/M4 占位
+│   ├── evaluation/           # M5 占位
+│   └── utils/                # 通用工具
+├── tests/                    # M1 新增 - pytest 测试
+│   ├── test_loader.py        # 12 tests
+│   └── test_preprocessor.py  # 17 tests
+├── notebooks/                # M1 新增 - EDA notebook
+├── outputs/                  # 输出目录
+├── requirements.txt          # M1 新增 - 依赖锁定
 └── CLAUDE.md                 # 项目入口索引
 ```
 
@@ -45,10 +56,10 @@ wg/
 
 ## Git 状态
 
-- **仓库状态**: 未初始化（非 git 仓库）
-- **当前分支**: N/A
-- **最近提交**: N/A
-- **未提交更改**: N/A
+- **仓库状态**: ✅ 已初始化
+- **当前分支**: main
+- **最近提交**: a8d17e0 — init: 项目初始化 - OpenSpec + 数据集 + 文档体系
+- **未提交更改**: 无
 
 ---
 

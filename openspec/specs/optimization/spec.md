@@ -44,6 +44,6 @@
 
 | # | 问题描述 | 当前影响 | 建议方案 | 优先级 | 状态 |
 |---|----------|----------|----------|--------|------|
-| 1 | seaborn/scikit-learn 未安装 | 无法运行 ML 模型训练和高级可视化 | `pip install seaborn scikit-learn` | 高 | 待处理 |
-| 2 | 数据集未解压 | 无法开始数据探索 | `unzip dataset/archive.zip -d dataset/` | 高 | 待处理 |
-| 3 | 项目未初始化 git | 无版本控制 | `git init` + 初始提交 | 中 | 待处理 |
+| 1 | seaborn/scikit-learn 未安装 | 无法运行 ML 模型训练和高级可视化 | `pip install seaborn scikit-learn` | 高 | ✅ 已完成（2026-06-14，用户在 conda 环境中安装） |
+| 2 | 数据集未解压 | 无法开始数据探索 | `unzip dataset/archive.zip -d dataset/` | 高 | ✅ 已完成（2026-06-14，KDDTrain+ 125973条 + KDDTest+ 22544条） |
+| 3 | 项目未初始化 git | 无版本控制 | `git init` + 初始提交 | 中 | ✅ 已完成（2026-06-14，main 分支，commit a8d17e0） |

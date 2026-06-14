@@ -44,13 +44,13 @@
 
 | 依赖名称 | 版本 | 官方链接 | 用途说明 |
 |----------|------|----------|----------|
-| Python | 3.10.12 | https://python.org | 主开发语言 |
-| Pandas | 2.3.3 | https://pandas.pydata.org | CSV 读取、数据清洗、特征处理 |
-| NumPy | 2.2.6 | https://numpy.org | 数值计算、数组操作 |
-| Matplotlib | 3.10.9 | https://matplotlib.org | 实验图表绘制 |
-| PyTorch | 2.11.0 | https://pytorch.org | 深度学习模型（CNN/LSTM 扩展） |
-| scikit-learn | 待安装 | https://scikit-learn.org | 决策树/随机森林/MLP/评估指标 |
-| Seaborn | 待安装 | https://seaborn.pydata.org | 统计可视化（热力图等） |
+| Python（conda） | 3.13.5 | https://python.org | 主开发语言（`/home/daivy/miniconda3/bin/python`） |
+| Pandas | 3.0.2 | https://pandas.pydata.org | CSV 读取、数据清洗、特征处理 |
+| NumPy | 2.3.3 | https://numpy.org | 数值计算、数组操作 |
+| Matplotlib | 3.10.8 | https://matplotlib.org | 实验图表绘制 |
+| PyTorch | 2.9.0 | https://pytorch.org | 深度学习模型（CNN/LSTM 扩展） |
+| scikit-learn | 1.8.0 | https://scikit-learn.org | 决策树/随机森林/MLP/评估指标 |
+| Seaborn | 0.13.2 | https://seaborn.pydata.org | 统计可视化（热力图等） |
 
 ## 外部资源
 

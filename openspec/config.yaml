@@ -1,8 +1,8 @@
 schema: spec-driven
 
 context: |
-  Tech stack: Python 3.10, Pandas, NumPy, Matplotlib, PyTorch, scikit-learn, Seaborn
-  Language: Python 3.10.12
+  Tech stack: Python 3.13.5 (conda), Pandas 3.0.2, NumPy 2.3.3, Matplotlib 3.10.8, PyTorch 2.9.0, scikit-learn 1.8.0, Seaborn 0.13.2
+  Language: Python 3.13.5（conda 环境 /home/daivy/miniconda3/bin/python）
   Testing: pytest（待配置）
   Formatting: black（待配置）
   Domain: 网络入侵检测系统（IDS），基于 NSL-KDD 数据集

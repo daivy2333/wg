@@ -32,6 +32,20 @@
 | `.claude/docs/tasks.md` | 任务追踪 | `grep "关键词" .claude/docs/tasks.md` |
 | `.claude/analysis/` | 深度分析文档 | `ls .claude/analysis/` |
 
+### 代码智能（CodeGraph，强制）
+
+| 工具 | 用途 | 何时用 |
+|------|------|--------|
+| `codegraph_explore` | 理解模块工作原理 | 探究项目时首选 |
+| `codegraph_callers` | 找上游调用 | 重构影响分析 |
+| `codegraph_callees` | 找下游调用 | 依赖链追踪 |
+| `codegraph_impact` | 改动影响范围 | 重构前必做 |
+| `codegraph_search` | 定位符号位置 | 快速 grep 替代 |
+| `codegraph_node` | 拉单个符号完整源码 | 同名重载时用 |
+| `codegraph_status` | 索引健康 | 排查问题时 |
+
+⚠️ CodeGraph 优先规则：能用 `codegraph_explore` 就不用 `Read + Grep`，禁止反向 grep 验证 CodeGraph 结果（信任 AST 解析）。
+
 ---
 
 ## 读取顺序

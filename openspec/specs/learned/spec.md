@@ -54,10 +54,20 @@
 - **预防措施**: 检测 conda 可用性时，用 `conda --version` 或 `type conda` 替代 `which conda`
 - **结论**: 项目使用 conda（miniconda）管理 Python 环境，后续所有 Python 命令应在 conda 环境中执行
 
+### 踩坑-002: bash 子 shell 中 conda 不可用
+
+- **症状**: Claude Code 的 Bash 工具（子 shell）中 `conda info --envs` 报 `conda: command not found`，但用户终端中 conda 正常工作
+- **根因**: conda 通过 `~/.bashrc` 中的 shell 函数初始化，Bash 工具的子 shell 不会 source `~/.bashrc`，因此 conda 函数和路径均不可用
+- **解决方案**: 用户在终端中执行 conda 相关操作；Claude Code 中直接使用 `/home/daivy/miniconda3/bin/python` 运行脚本
+- **预防措施**: 需要安装包或管理 conda 环境时，提示用户在终端执行
+- **结论**: Claude Code 中执行 Python 代码应使用 `/home/daivy/miniconda3/bin/python`（Python 3.13.5），而非 `/usr/bin/python3`（Python 3.10.12）
+
 ## 文件速查表
 
 | 文件路径 | 用途 | 关键内容 |
 |----------|------|----------|
 | `readme` | 项目说明文档 | 技术栈、数据集说明、分工建议、实验流程 |
-| `dataset/archive.zip` | NSL-KDD 数据集压缩包 | KDDTrain+.TXT + KDDTest+.TXT（需解压） |
+| `dataset/KDDTrain+.txt` | NSL-KDD 训练集 | 125,973 条，41 特征 + 标签 + 难度 |
+| `dataset/KDDTest+.txt` | NSL-KDD 测试集 | 22,544 条，41 特征 + 标签 + 难度 |
 | `openspec/config.yaml` | OpenSpec 项目配置 | 技术栈、规则、上下文 |
+| `/home/daivy/miniconda3/bin/python` | conda 环境 Python | Python 3.13.5，所有依赖已安装 |
