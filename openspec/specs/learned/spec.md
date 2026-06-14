@@ -62,6 +62,18 @@
 - **预防措施**: 需要安装包或管理 conda 环境时，提示用户在终端执行
 - **结论**: Claude Code 中执行 Python 代码应使用 `/home/daivy/miniconda3/bin/python`（Python 3.13.5），而非 `/usr/bin/python3`（Python 3.10.12）
 
+### 踩坑-003: pytest + sklearn 触发 WSL 连接断开
+
+- **症状**: 运行 `pytest tests/test_decision_tree.py` 后 WSL 连接断开，shell 无响应
+- **根因**: 未设 `OMP_NUM_THREADS` 时，sklearn 的 GridSearchCV（n_jobs=-1）默认启动 OMP 并行。在 WSL2 多核 + 内存受限环境下，pytest 收集 11 个测试，每个触发 OMP 进程，组合爆炸（n 进程 × m 线程）导致 OOM 或 fork 失败
+- **解决方案**: 两层防护：
+  1. 创建 `tests/conftest.py` 强制设置 OMP_NUM_THREADS=1 / MKL_NUM_THREADS=1 / OPENBLAS_NUM_THREADS=1
+  2. sklearn 模型（RF / GridSearchCV）的 `n_jobs` 默认值改为 `1`（非 -1），避免进程级并行；生产脚本（`scripts/train_m3.py`）可显式传 `n_jobs=-1` 加速
+- **预防措施**:
+  - ML 项目测试前**必须**确认 conftest.py 存在
+  - sklearn 模型函数的 `n_jobs` 默认值应为 1，让生产脚本显式 opt-in 多进程
+- **结论**: 测试环境限制 OMP=1 + n_jobs=1 保证稳定（< 30s 性能损失），生产代码放开
+
 ## 文件速查表
 
 | 文件路径 | 用途 | 关键内容 |

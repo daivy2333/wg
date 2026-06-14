@@ -59,15 +59,15 @@
 
 | # | 任务 | 负责人 | 优先级 | 验收标准 | 状态 |
 |---|------|--------|--------|----------|------|
-| 3.1 | 决策树基线模型训练 | B同学 | 高 | `DecisionTreeClassifier` 二分类基线 accuracy 报告 | 待开始 |
-| 3.2 | 决策树参数网格搜索 | B同学 | 高 | GridSearchCV 调优 max_depth/min_samples_split/criterion | 待开始 |
-| 3.3 | 决策树多分类训练 | B同学 | 中 | 23 类攻击类型的多分类结果 | 待开始 |
-| 3.4 | 随机森林基线模型训练 | B同学 | 高 | `RandomForestClassifier` 二分类基线 accuracy 报告 | 待开始 |
-| 3.5 | 随机森林参数网格搜索 | B同学 | 高 | GridSearchCV 调优 n_estimators/max_depth/min_samples_split | 待开始 |
-| 3.6 | 随机森林多分类训练 | B同学 | 中 | 23 类攻击类型的多分类结果 | 待开始 |
-| 3.7 | 随机森林特征重要度分析 | B同学 | 中 | 输出 Top-20 特征重要度柱状图 | 待开始 |
-| 3.8 | 模型持久化 | B同学 | 高 | 保存最佳模型到 `outputs/models/`（pickle） | 待开始 |
-| 3.9 | 撰写模型训练报告 | B同学 | 中 | `docs/model_report_dt_rf.md` 包含参数、指标、分析 | 待开始 |
+| 3.1 | 决策树基线模型训练 | B同学 | 高 | `DecisionTreeClassifier` 二分类基线 accuracy 报告 | ✅ 已完成（acc=0.7634）|
+| 3.2 | 决策树参数网格搜索 | B同学 | 高 | GridSearchCV 调优 max_depth/min_samples_split/criterion | ✅ 已完成（best=entropy/max_depth=20/min_samples_split=2）|
+| 3.3 | 决策树多分类训练 | B同学 | 中 | 23 类攻击类型的多分类结果 | ✅ 已完成（acc=0.0456，多分类局限见报告 §8）|
+| 3.4 | 随机森林基线模型训练 | B同学 | 高 | `RandomForestClassifier` 二分类基线 accuracy 报告 | ✅ 已完成（acc=0.7083, auc=0.8989）|
+| 3.5 | 随机森林参数网格搜索 | B同学 | 高 | GridSearchCV 调优 n_estimators/max_depth/min_samples_split | ✅ 已完成（best=n_estimators=300/max_depth=20）|
+| 3.6 | 随机森林多分类训练 | B同学 | 中 | 23 类攻击类型的多分类结果 | ✅ 已完成（acc=0.0464）|
+| 3.7 | 随机森林特征重要度分析 | B同学 | 中 | 输出 Top-20 特征重要度柱状图 | ✅ 已完成（top1=flag_SF 14.79%）|
+| 3.8 | 模型持久化 | B同学 | 高 | 保存最佳模型到 `outputs/models/`（pickle） | ✅ 已完成（joblib 4 个文件）|
+| 3.9 | 撰写模型训练报告 | B同学 | 中 | `docs/model_report_dt_rf.md` 包含参数、指标、分析 | ✅ 已完成（10 章节 + 局限诚实记录）|
 
 ---
 

@@ -1,7 +1,7 @@
 # SNAPSHOT.md — 项目状态快照
 
 > Last Updated: 2026-06-14
-> M1 + M2 阶段已完成（M1 任务 1.4-1.8 ✅ / M2 任务 2.1-2.10 ✅）
+> M1 + M2 + M3 阶段已完成（M1 任务 1.4-1.8 ✅ / M2 任务 2.1-2.10 ✅ / M3 任务 3.1-3.9 ✅）
 
 ---
 
@@ -28,22 +28,33 @@ wg/
 │   │   ├── outlier.py           # M2 IQR + clip + log1p
 │   │   ├── feature_selector.py  # M2 方差阈值 + RF Top-K
 │   │   └── persistence.py       # M2 pickle 序列化
-│   ├── models/               # M3/M4 占位
+│   ├── models/                  # M3 新增
+│   │   ├── decision_tree.py     # M3 DT 基线 + 网格搜索
+│   │   ├── random_forest.py     # M3 RF 基线 + 网格搜索 + 重要度
+│   │   └── persistence.py       # M3 joblib 序列化
 │   ├── evaluation/           # M5 占位
 │   └── utils/                # 通用工具
-├── tests/                    # M1+M2 pytest 测试
+├── tests/                    # M1+M2+M3 pytest 测试
+│   ├── conftest.py              # M3 WSL 兼容（OMP=1）
 │   ├── test_loader.py        # 12 tests
 │   ├── test_preprocessor.py  # 17 tests
 │   ├── test_outlier.py       # 11 tests
 │   ├── test_feature_selector.py  # 9 tests
-│   └── test_persistence.py   # 8 tests
+│   ├── test_persistence.py   # 8 tests
+│   ├── test_decision_tree.py    # M3 11 tests
+│   ├── test_random_forest.py    # M3 11 tests
+│   └── test_model_persistence.py # M3 7 tests
+├── scripts/
+│   └── train_m3.py              # M3 编排脚本（n_jobs=4 智能调节）
 ├── notebooks/
 │   └── 01_data_exploration.py   # M2 EDA 脚本（14 场景）
-├── outputs/                  # M2 输出
-│   ├── processed/            # 8 个 .pkl 文件（X/y 二分类+多分类）
-│   └── figures/              # 8 个分析图表 PNG
+├── outputs/                  # M2 + M3 输出
+│   ├── processed/            # 8 个 .pkl 文件
+│   ├── figures/              # 8 个分析图表 PNG
+│   └── models/               # M3 4 个 .joblib
 ├── docs/
-│   └── eda_report.md         # M2 EDA 报告
+│   ├── eda_report.md             # M2 EDA 报告
+│   └── model_report_dt_rf.md     # M3 DT/RF 训练报告
 └── CLAUDE.md                 # 项目入口索引
 ├── requirements.txt          # M1 新增 - 依赖锁定
 └── CLAUDE.md                 # 项目入口索引
