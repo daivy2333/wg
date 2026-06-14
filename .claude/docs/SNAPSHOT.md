@@ -1,10 +1,10 @@
 # SNAPSHOT.md — 项目状态快照
 
 > Last Updated: 2026-06-14
-> **M1 + M2 + M3 + M4 + M5 阶段全部完成** ✅
+> **M1 + M2 + M3 + M4 + M5 + M6 阶段全部完成** ✅ 🎉
 > - M1 任务 1.1-1.8 ✅ / M2 任务 2.1-2.10 ✅
 > - M3 任务 3.1-3.9 ✅ / M4 任务 4.1-4.8 ✅
-> - M5 任务 5.1-5.7 ✅（10 模型统一测试集重评估 + 7 图 + 9 章报告）
+> - M5 任务 5.1-5.7 ✅ / M6 任务 6.1-6.8 ✅
 
 ---
 
@@ -48,10 +48,15 @@ wg/
 │   │   ├── mlp.py               # M4 MLP（基线/调优/多分类）
 │   │   ├── cnn.py               # M4 1D CNN
 │   │   └── lstm.py              # M4 LSTM
-│   ├── evaluation/           # M5 评估模块
-│   │   ├── __init__.py           # 公开 API 导出
-│   │   ├── metrics.py            # M5 3 个评估函数（二分类/多分类/分类F1）
-│   │   └── plot.py               # M5 5 个 matplotlib 图表函数
+│   └── evaluation/           # M5 评估模块
+│   │   ├── __init__.py
+│   │   ├── metrics.py            # M5 3 个评估函数
+│   │   └── plot.py               # M5 5 个图表函数
+│   ├── paper/                 # M6 LaTeX 论文
+│   │   ├── main.tex              # ctex + XeLaTeX 主文件
+│   │   ├── chapters/             # 6 个章节 .tex
+│   │   ├── refs.bib              # 9 条 BibTeX 参考文献
+│   │   └── slides_outline.md     # 15 页答辩 PPT 提纲
 │   └── utils/                # 通用工具
 ├── tests/                    # M1+M2+M3+M4 pytest 测试
 │   ├── conftest.py              # M3 WSL 兼容 + M4 torch 三防
@@ -86,10 +91,11 @@ wg/
 │   ├── label_id_to_name.json  # M5 40 个攻击名映射
 │   └── label_id_to_category.json  # M5 40 个分类映射
 ├── docs/
-│   ├── eda_report.md             # M2 EDA 报告
-│   ├── model_report_dt_rf.md     # M3 DT/RF 训练报告
-│   ├── model_report_mlp_dl.md    # M4 MLP/CNN/LSTM 训练报告
+│   ├── eda_report.md
+│   ├── model_report_dt_rf.md
+│   ├── model_report_mlp_dl.md
 │   └── comparison_report.md      # M5 9 章节对比分析报告
+├── README.md                 # M6 项目完整复现指南
 ├── openspec/changes/         # OpenSpec 变更管理
 │   ├── archive/
 │   │   ├── 2026-06-14-m1-infrastructure/
@@ -125,9 +131,8 @@ wg/
 
 - **仓库状态**: ✅ 已初始化
 - **当前分支**: main
-- **最近提交**: 60c8e06 — feat(m5): add comparison report + 7 figures + OpenSpec change
-- **M5 状态**: 实施 + 测试 + 全部产出 + git commit 完成（3 atomic commits）
-- **OpenSpec 活跃变更**: m5-comparison-analysis（待归档）
+- **最近提交**: 4bc066e — chore(m6): archive M6 OpenSpec change + update docs
+- **项目状态**: M1-M6 全部完成 ✅（6/6 里程碑）
 
 ---
 

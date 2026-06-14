@@ -1,6 +1,6 @@
 # Architecture Spec
 
-> Version: 1.3.0 | Last Updated: 2026-06-14（M5 新增 ADR-008 + ADR-009）
+> Version: 1.4.0 | Last Updated: 2026-06-14（M6 新增 ADR-010）
 
 ## Purpose
 
@@ -210,5 +210,26 @@
   - 编排脚本内置 `compute_binary_metrics()` / `_get_probabilities()` 等 inline 函数（自包含，不依赖 src/evaluation 导入）
   - 图表编号 09-13（M2 占 01-08），输出到 `outputs/figures/`
 - **替代方案**:
-  - 单文件脚本（`train_m3.py` 风格）：简单但不可测试，函数不可复用
-  - Notebook（`evaluate_m5.ipynb`）：交互式但不可自动化
+   - 单文件脚本（`train_m3.py` 风格）：简单但不可测试，函数不可复用
+   - Notebook（`evaluate_m5.ipynb`）：交互式但不可自动化
+
+### ADR-010: 论文 LaTeX 项目结构（ctex + 章节分离）
+
+- **决策**: 论文使用 LaTeX + ctex 文档类（XeLaTeX 编译），章节按独立 .tex 文件组织，通过 `\input{}` 合并到主文件
+- **原因**:
+  1. ctex 原生支持 UTF-8 中文，无需 CJK 编码转换
+  2. 章节独立文件便于三人并行撰写（A: Ch1+2, B: Ch3, C: Ch4+5），无内容依赖
+  3. `\graphicspath{{../outputs/figures/}}` 统一图表路径，避免 15 张 PNG 重复复制
+  4. 图表通过 `paper/figures/` 符号链接到 `outputs/figures/`，保持单一数据源
+  5. BibTeX + `\bibliographystyle{unsrt}` 管理参考文献（9 条目）
+- **影响**:
+  - `paper/main.tex`：主文件含封面、摘要、目录、`\input` 6 章、参考文献
+  - `paper/chapters/ch1-intro.tex` ~ `ch6-conclusion.tex`：6 个独立章节
+  - `paper/refs.bib`：NSL-KDD, sklearn, PyTorch, SMOTE, 3 篇中文文献
+  - `paper/slides_outline.md`：15 页答辩 PPT 提纲
+  - `README.md`：252 行完整复现指南（5 步：EDA→M3→M4→M5→测试）
+  - 论文总计 9,764 中文字符，引用 15 张图表，满足 ≥5,000 字要求
+- **替代方案**:
+  - Word 文档：所见即所得但版本控制不友好，图表管理繁琐
+  - Overleaf 在线 LaTeX：协作方便但依赖网络
+  - Markdown + Pandoc 转 LaTeX：转换过程可能丢失格式细节

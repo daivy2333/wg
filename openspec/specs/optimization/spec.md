@@ -1,6 +1,6 @@
 # Optimization Spec
 
-> Version: 1.3.0 | Last Updated: 2026-06-14（M5 完成，新增 O-M5-01 验证集偏差诚实记录）
+> Version: 1.4.0 | Last Updated: 2026-06-14（M6 论文完成，项目 M1-M6 全部完工）
 
 ## Purpose
 

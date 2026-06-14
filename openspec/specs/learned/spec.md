@@ -1,6 +1,6 @@
 # Learned Spec
 
-> Version: 1.3.0 | Last Updated: 2026-06-14（M5 完成，新增踩坑-007 + 文件速查更新）
+> Version: 1.4.0 | Last Updated: 2026-06-14（M6 论文完成，项目 M1-M6 全部完工）
 
 ## Purpose
 
@@ -386,4 +386,9 @@ def predict(self, x):
 | `src/evaluation/plot.py` | M5 图表函数 | 混淆矩阵/ROC/F1柱状图/特征重要度/DLvsML |
 | `outputs/metrics_m5.json` | M5 测试集指标 | 10 个模型的 accuracy/precision/recall/f1/auc |
 | `outputs/label_id_to_name.json` | M5 标签映射 | 40 个攻击名 ID→名称映射 |
-| `outputs/label_id_to_category.json` | M5 分类映射 | 40 个 ID→大类（DoS/Probe/R2L/U2R/Normal）|
+| `paper/main.tex` | M6 论文主文件 | ctex + XeLaTeX，6 章 \input，BibTeX |
+| `paper/chapters/ch1-intro.tex` | M6 Ch1 | 绪论+数据集，1215字，3图 |
+| `paper/chapters/ch6-conclusion.tex` | M6 Ch6 | 总结展望，1694字，3局限+5未来 |
+| `paper/refs.bib` | M6 参考文献 | 9 条（NSL-KDD, sklearn, PyTorch, SMOTE, 3中文）|
+| `paper/slides_outline.md` | M6 PPT提纲 | 15 slides，15张图引用 |
+| `README.md` | 项目指南 | 252行，5步复现流程 |

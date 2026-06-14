@@ -85,6 +85,39 @@
 - 局限：单数据集、无统计检验、CNN/LSTM架构不匹配
 - 未来：开放集识别、Focal Loss、集成学习、跨数据集验证、实时部署
 
-## Slide 15: 致谢
-- 感谢老师指导
-- Q&A
+## Slide 15: 致谢与 Q&A
+- 致谢指导老师与同学
+- Q&A 开放提问
+- 配套图：无
+- 时长：弹性
+
+---
+
+## 配套图清单
+
+| 图编号 | 文件 | 使用幻灯片 |
+|---|---|---|
+| 02 | `02_attack_category_distribution.png` | Slide 3 |
+| 07 | `07_log1p_before_after.png` | Slide 4 |
+| 08 | `08_feature_importance_top20.png` | Slide 4 |
+| 09-dt | `09_confusion_matrix_dt.png` | Slide 5 |
+| 09-rf | `09_confusion_matrix_rf.png` | Slide 6 |
+| 09-mlp | `09_confusion_matrix_mlp.png` | Slide 7 |
+| 10 | `10_f1_by_category.png` | Slide 11 |
+| 11 | `11_roc_curves.png` | Slide 11 |
+| 12 | `12_feature_importance_comparison.png` | Slide 12 |
+| 13 | `13_dl_vs_ml_comparison.png` | Slide 10 |
+
+## 章节覆盖检查
+
+| 章节 | 幻灯片 | 占比 |
+|---|---|---|
+| 第 1 章 绪论 | Slide 2, 3 | 2/15（13%） |
+| 第 2 章 预处理 | Slide 4 | 1/15（7%） |
+| 第 3 章 传统 ML | Slide 5, 6 | 2/15（13%） |
+| 第 4 章 深度学习 | Slide 7, 8, 9 | 3/15（20%） |
+| 第 5 章 对比分析 | Slide 10, 11, 12 | 3/15（20%） |
+| 第 6 章 总结展望 | Slide 13, 14, 15 | 3/15（20%） |
+| 标题与背景 | Slide 1 | 1/15（7%） |
+
+> 说明：第 2 章预处理重点在工程实现，PPT 上以 1 张流水线图 + 1 张特征重要度图覆盖即可；研究重点（深度学习与对比分析）各占 3 张以保证讨论深度。
