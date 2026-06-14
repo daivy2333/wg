@@ -1,0 +1,181 @@
+% !TEX root = ../main.tex
+% ============================================================================
+% Chapter 5: 对比分析与讨论
+% 数据来源: outputs/metrics_m5.json、outputs/figures/10~13_*.png
+% ============================================================================
+
+\section{对比分析与讨论}
+
+前两章分别评估了传统机器学习与神经网络方法在 NSL-KDD 数据集上的表现，
+但各章实验在测试划分、调优策略、随机种子等方面存在差异，模型之间的横向比较难以直接进行。
+本章将所有模型置于同一评测框架下重新评估，量化分析不同方法族之间的真实差距，
+并结合训练耗时、可解释性、部署成本等维度给出综合的选型建议。
+
+\subsection{评估方法}
+
+为保证横向对比的公平性，所有模型均在 M5 统一测试集（22,544 条样本，20 维特征）上重新推理与指标计算。
+测试集来自 NSL-KDD 官方 KDDTest+.txt，包含 14 种训练阶段从未出现的新型攻击，是评估模型开放世界泛化能力的客观基准。
+
+二分类任务统一报告 accuracy、precision、recall、f1、AUC 五项指标；
+多分类任务则采用 full\_accuracy（含 unseen 攻击的全量准确率）、known\_class\_accuracy（仅在训练已见类别上的准确率）、
+f1\_macro（宏平均 F1，对类别不均衡敏感）三项指标。
+所有指标均通过 \texttt{src/evaluation/metrics.py} 的统一计算流程产出，避免各章实验脚本的指标口径不一致。
+
+值得注意的是，SMOTE 过采样的多分类模型（\texttt{mlp\_multiclass\_smote}）虽然已在第 4 章中单独分析，
+但因其多分类 full\_acc 从 0.101 降至 0.028，呈现显著的负向效果，故不纳入本章主对比表的横向比较。
+这一处理与 SMOTE 在小样本类（U2R 仅 52 条）合成数据上污染训练分布的结论一致。
+
+\subsection{二分类性能对比}
+
+表~\ref{tab:binary-comparison} 汇总了 6 个模型在统一测试集上的二分类指标，
+其中 DT 与 RF 为第 3 章网格搜索调优后的最优模型，
+MLP 同时给出基线与调优两组结果，CNN 与 LSTM 为第 4 章固定架构的最终模型。
+
+\begin{table}[H]
+  \centering
+  \caption{六模型二分类统一测试集指标对比}
+  \label{tab:binary-comparison}
+  \begin{tabular}{lccccc}
+    \toprule
+    模型 & Accuracy & Precision & Recall & F1 & AUC \\
+    \midrule
+    DT (tuned)  & \textbf{0.7755} & 0.9604 & \textbf{0.6317} & \textbf{0.7621} & 0.7821 \\
+    RF (tuned)  & 0.7234 & 0.9602 & 0.5363 & 0.6882 & \textbf{0.9150} \\
+    MLP (base)  & 0.7423 & 0.9580 & 0.5724 & 0.7166 & 0.9058 \\
+    MLP (tuned) & 0.7445 & 0.9560 & 0.5777 & 0.7202 & 0.9074 \\
+    CNN         & 0.7635 & \textbf{0.9635} & 0.6075 & 0.7452 & 0.8820 \\
+    LSTM        & 0.7427 & 0.9628 & 0.5700 & 0.7161 & 0.8832 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+对比呈现两个明显特征。第一，DT 调优后取得最高 accuracy（0.7755）和最高 F1（0.7621），
+但其 AUC 仅 0.7821，是六个模型中最低的。这一"准确率高、判别力低"的悖论源于 DT 的硬决策特性：
+树模型一旦做出预测即输出 0 或 1，缺乏概率校准，使得 ROC 曲线在高阈值区域快速塌陷。
+第二，RF 的 F1 仅 0.6882，但 AUC 高达 0.9150，是所有模型中概率排序能力最强的。
+RF 由 300 棵子树集成的投票机制天然输出校准良好的后验概率，
+在阈值敏感的业务场景（如风险评级、欺诈拦截）中具有不可替代的优势。
+
+这一对比揭示了精确率-召回率权衡（precision-recall tradeoff）的本质：
+高精度（>0.95）几乎成为所有模型的共识，意味着误报控制良好；
+真正拉开差距的是召回率（0.54–0.63），即"在保证低误报的前提下能多检出多少真异常"。
+DT 以稍高的召回率换取了更高的 F1，RF 则以牺牲召回换取最佳的全局判别能力。
+
+图~\ref{fig:13_dl_vs_ml_comparison} 以并列柱状图形式直观呈现传统机器学习与深度学习方法
+在 accuracy、precision、recall、F1、AUC 五个维度上的差异，可视化地印证了上述分析。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{13_dl_vs_ml_comparison.png}
+  \caption{传统机器学习与深度学习方法多指标对比}
+  \label{fig:13_dl_vs_ml_comparison}
+\end{figure}
+
+\subsection{ROC曲线分析}
+
+ROC 曲线通过变化分类阈值描绘真阳性率与假阳性率的权衡，是评估模型概率排序能力的标准工具。
+图~\ref{fig:11_roc_curves} 将五个主要模型的 ROC 曲线叠加在同一坐标系中，
+曲线下面积（AUC）直接反映了模型的全局判别能力。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.75\textwidth]{11_roc_curves.png}
+  \caption{六模型 ROC 曲线叠加对比}
+  \label{fig:11_roc_curves}
+\end{figure}
+
+AUC 由高到低排序为：RF (0.9150) $>$ MLP-tuned (0.9074) $>$ MLP-base (0.9058) $>$ LSTM (0.8832) $>$ CNN (0.8820) $>$ DT (0.7821)。
+曲线呈现两个聚类：RF 与两个 MLP 变体在低 FPR 区域紧贴左上角，AUC 均在 0.90 以上，
+代表"概率质量集中于真实正例"的优秀排序；
+CNN 与 LSTM 紧随其后，AUC 在 0.88 附近；
+DT 因硬决策输出概率集中在 0 与 1 两个端点，ROC 曲线呈现明显的阶梯状，
+导致曲线下面积被显著低估。这进一步验证了第 3 章的观察：
+DT 适合作为高精度、低推理成本的实时检测器，但不适合作为概率评分模型。
+
+\subsection{攻击大类F1对比}
+
+为深入理解多分类任务中各模型的细粒度表现，图~\ref{fig:10_f1_by_category} 给出了
+DT、RF、MLP 三个代表性模型在 Normal 与四类攻击大类（DoS、Probe、R2L、U2R）上的 F1 柱状图。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.75\textwidth]{10_f1_by_category.png}
+  \caption{三模型各类别 F1 对比}
+  \label{fig:10_f1_by_category}
+\end{figure}
+
+各类别 F1 呈现严重的不均衡特征：Normal 与 DoS 类的 F1 均在 0.8 以上，
+Probe 类处于 0.6–0.7 的中等水平，R2L 接近 0.2–0.4，而 U2R 几乎全部跌至 0.1 以下。
+这一格局与训练集样本分布高度相关：U2R 在训练集中仅有 52 条样本，
+分类器几乎无法从中学习到稳定的判别模式，遑论对测试集中同类变种进行泛化。
+即便 MLP 在 Normal 和 DoS 上的 F1 高于 DT/RF，也无法弥补 U2R 与 R2L 上的系统性塌陷。
+
+\subsection{特征重要度收敛分析}
+
+特征工程阶段已通过随机森林重要度筛选出 20 维核心特征，本节进一步考察 DT 与 RF 在训练完成后
+给出的特征重要度排序是否一致，以判断特征选择是否具有模型无关的稳定性。
+图~\ref{fig:12_feature_importance_comparison} 并列展示两棵树模型的前 15 维特征重要度。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{12_feature_importance_comparison.png}
+  \caption{DT 与 RF 特征重要度 Top-15 对比}
+  \label{fig:12_feature_importance_comparison}
+\end{figure}
+
+两模型在 Top-15 特征上呈现高度一致的排序：\texttt{flag\_SF}（连接状态标志）双双位列第一，
+\texttt{src\_bytes}、\texttt{dst\_bytes}、\texttt{same\_srv\_rate}、\texttt{dst\_host\_srv\_count} 等流量统计特征紧随其后，
+仅在第 8–15 位的次序上存在轻微差异。这一收敛现象说明：
+基于信息增益或基尼不纯度的重要性度量在两个不同的树模型族上具有稳定的语义，
+所选特征对各类攻击均具有判别力。换言之，特征工程的结论不依赖于具体模型的选择，
+为后续模型替换与集成提供了稳健的输入基础。
+
+\subsection{深度学习与传统机器学习}
+
+将两类方法置于统一的测试集评估后，可以更客观地审视"深度学习必然优于传统方法"这一直觉。
+
+在 IID 分布的验证集上，MLP 的 F1 达到 0.989，RF 仅 0.690 左右，前者领先约 30 个百分点；
+但在包含 14 种 unseen 攻击的 OOD 测试集上，MLP 的 F1 跌至 0.7202，反而比 DT 的 0.7621 低约 4 个百分点。
+换言之，深度学习方法在分布内数据上展现的强大拟合能力，并未有效迁移到分布外的真实部署场景。
+
+这一现象的根源有三：第一，NSL-KDD 每条样本代表一次独立的网络连接，
+样本之间无时序或空间局部结构，MLP/CNN/LSTM 的归纳偏置（局部性、平移不变性、时序依赖）均无法发挥作用；
+第二，训练集与测试集攻击分布差异巨大，模型在训练阶段从未见过 14 种新型攻击的任何样本，
+泛化只能依赖特征空间的相似性度量，而神经网络对未见样本的相似性度量并无系统性优势；
+第三，DT/RF 的硬决策与高 interpretability 让其决策边界更易于审计与人工修正，
+在安全敏感场景中具有工程层面的隐性优势。
+
+表~\ref{tab:multiclass-comparison} 进一步比较了三模型的多分类表现。
+MLP 的 full\_accuracy 达到 0.1009，约为 RF（0.0464）与 DT（0.0456）的两倍，
+known\_class\_accuracy 也呈现类似倍数关系，说明 MLP 对训练已见类别的细粒度识别能力优于树模型。
+然而三者的 f1\_macro 均极低（<0.02），再次印证小类（U2R、R2L）的系统性失败主导了宏平均指标。
+
+\begin{table}[H]
+  \centering
+  \caption{三模型多分类统一测试集指标对比}
+  \label{tab:multiclass-comparison}
+  \begin{tabular}{lccc}
+    \toprule
+    模型 & Full Accuracy & Known Class Accuracy & F1 Macro \\
+    \midrule
+    MLP & \textbf{0.1009} & \textbf{0.1179} & 0.0146 \\
+    RF  & 0.0464 & 0.0542 & \textbf{0.0166} \\
+    DT  & 0.0456 & 0.0533 & 0.0155 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{综合结论}
+
+综合上述分析，本研究在 NSL-KDD 数据集上得到以下三点主要结论。
+其一，二分类场景下，DT 与 RF 是工程实践中最具竞争力的选择：
+前者提供最高的 F1 与最快的推理（0.02 秒/批次），后者提供最优的概率排序与 AUC；
+若以单阈值部署，DT 更优；若以概率评分支撑下游决策，RF 更优。
+其二，深度学习方法在 IID 验证集上的显著优势在 OOD 测试集上几乎消失，
+MLP 的 F1 与 DT 持平甚至略低，"模型越复杂效果越好"的朴素直觉在 NSL-KDD 上并不成立。
+其三，多分类任务受 unseen 攻击与小类样本的双重制约，全量准确率上限约 10\%，
+所有模型均无法真正解决开放世界识别问题，需要借助异常检测、主动学习等
+超出监督分类范畴的范式才能进一步突破。
+
+基于上述结论，下一章将系统总结本研究的全部工作、归纳方法论层面的经验教训，
+并对未来研究方向（如半监督学习、图神经网络、在线学习）提出展望。
