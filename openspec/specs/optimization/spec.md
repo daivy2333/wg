@@ -186,3 +186,36 @@
   - 未来训练脚本同时输出 test_metrics（不仅 val_metrics）
 - **优先级**: 高（直接影响论文数据可信度）
 - **状态**: ✅ 已完成（M5 统一测试集重评估产出 `metrics_m5.json` + `comparison_report.md`）
+
+<!-- O-M7-01 -->
+### O-M7-01: 实验图表 PNG 转矢量图（投稿要求）
+
+- **问题**: CJC 模板要求"图应为矢量图"，当前 15 张实验图表均为 PNG 栅格图（matplotlib 默认 `savefig(dpi=150)`），不符合期刊投稿规范
+- **当前影响**: 论文可编译但图表在放大/印刷时模糊，可能被期刊退稿
+- **建议方案**:
+  1. 修改所有图表生成脚本（`notebooks/01_data_exploration.py`, `scripts/evaluate_m5.py`），将 `savefig` 参数改为 `format='pdf'` 或 `format='eps'`
+  2. 在 `matplotlibrc` 或脚本中设置 `rcParams['savefig.format'] = 'pdf'`
+  3. 重新运行 M2+M5 图表生成，产出矢量版本到 `outputs/figures/`
+  4. 引用时使用 `.pdf` 扩展名（`xelatex` 原生支持 PDF 插图）
+- **优先级**: 中（编译不阻塞，但投稿前必须完成）
+- **状态**: 📝 待处理
+
+<!-- O-M7-02 -->
+### O-M7-02: cjc.cls 模板补丁需定期同步上游
+
+- **问题**: 为适配课程作业格式，对 `cjc.cls` 做了两处注释修改（去除 CLC/DOI 显示行、去除收稿/修改日期行）。这些修改在模板升级时会被覆盖。
+- **当前影响**: 无——当前版本工作正常。但若从 `latex-/` 上游拉取新版模板，需重新应用补丁。
+- **建议方案**:
+  1. 将补丁记录为 `paper/cjc.patch`（`diff -u latex-/cjc.cls paper/cjc.cls`）
+  2. 或在 cjc-main.tex 导言区用 `\patchcmd` 动态打补丁（避免修改 .cls）
+- **优先级**: 低
+- **状态**: 📝 待处理
+
+<!-- O-M7-03 -->
+### O-M7-03: 图宽 `\columnwidth` vs `\textwidth` 在 cjc 模板下的差异
+
+- **问题**: CJC 模板中 `\includegraphics[width=\textwidth]` 导致图片宽度溢出 252pt（约 2x 版心宽），改用 `\columnwidth` 后正常。根因是 CJC 的 `\textwidth`（约 425pt）在 figure 浮体内可能与图片的 DPI 元数据冲突导致 XeTeX 计算异常。
+- **当前方案**: 全章节图宽统一使用 `\columnwidth`（已验证编译通过）
+- **建议方案**: 若将来升级模板或更换引擎，验证 `\textwidth` vs `\columnwidth` 行为
+- **优先级**: 低
+- **状态**: ✅ 已修复

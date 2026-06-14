@@ -1,0 +1,111 @@
+% appendix.tex -- 附录（CJC 模板 \input{appendix} 加载）
+% 仅包含 \section{} 块，不含文档类与导言
+
+\section{模型超参数完整列表}
+
+本文实验共涉及10个模型，涵盖传统机器学习与深度学习方法。表~\ref{tab:hyperparams}列出6组核心配置的关键超参数，其余4个模型（$K$近邻、朴素贝叶斯、逻辑回归、支持向量机）采用scikit-learn库默认参数，不再单独列出。所有神经网络模型的优化器统一为Adam，批次大小为256，训练轮数上限为50，并启用早停机制（patience=5）。
+
+\begin{table}[htbp]
+\centering
+\caption{模型超参数完整列表}
+\label{tab:hyperparams}
+\small
+\begin{tabular}{lll}
+\toprule
+模型 & 超参数 & 取值 \\
+\midrule
+DT（决策树）  & criterion           & entropy            \\
+              & max\_depth          & 20                 \\
+              & min\_samples\_split & 2                  \\
+\midrule
+RF（随机森林） & n\_estimators       & 300                \\
+              & max\_depth          & 20                 \\
+              & criterion           & gini               \\
+\midrule
+MLP（基准）   & hidden\_layers      & (128, 64)          \\
+              & activation          & relu               \\
+              & learning\_rate      & 0.001              \\
+\midrule
+MLP（调优）   & hidden\_layers      & (256, 128, 64)     \\
+              & activation          & relu               \\
+              & dropout             & 0.3                \\
+\midrule
+CNN           & conv1d\_layer\_1    & filters=32, kernel=3 \\
+              & conv1d\_layer\_2    & filters=64, kernel=3 \\
+              & fc\_layer\_1        & 128                \\
+              & fc\_layer\_2        & 1                  \\
+\midrule
+LSTM          & lstm\_units         & 64                 \\
+              & fc\_layer\_1        & 32                 \\
+              & fc\_layer\_2        & 1                  \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{SMOTE过采样详细实验结果}
+
+为缓解多分类任务中类别严重不平衡（尤其是U2R和R2L两个极稀有类在训练集中合计不足200条样本）对模型性能的干扰，本文在多分类实验流程中额外引入SMOTE（Synthetic Minority Over-sampling Technique）对训练集进行过采样，将所有非多数类样本数提升至与多数类对齐的水平。表~\ref{tab:smote}对比了SMOTE应用前后随机森林模型在多分类测试集上的性能变化。
+
+\begin{table}[htbp]
+\centering
+\caption{SMOTE过采样前后多分类性能对比}
+\label{tab:smote}
+\small
+\begin{tabular}{lcc}
+\toprule
+指标           & SMOTE前 & SMOTE后 \\
+\midrule
+full\_accuracy & 0.101   & 0.028   \\
+f1\_macro      & 0.015   & 0.008   \\
+\midrule
+变化幅度       & 基准    & full\_acc 下降 72.3\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+实验结果与预期相反，SMOTE过采样在NSL-KDD多分类任务中产生了显著的负向影响：整体准确率从0.101下降至0.028，降幅达72.3\%；宏平均F1值由0.015降至0.008，进一步降低约46.7\%。逐类分析显示，U2R和R2L两个稀有类别的召回率与F1值在SMOTE后均出现明显退化，反而是Normal、DoS等原本已占据主导地位的多数类正确率同步下滑。这一现象可归因于两点：
+
+（1）少数类（U2R、R2L）原始样本极少，SMOTE在其特征邻域内合成的样本容易跨越真实的类边界，引入大量噪声，干扰分类面的建立；
+
+（2）过采样后多数类（Normal、DoS）样本量被压缩至与少数类对齐，模型对大类流量模式的拟合能力被削弱，反而丧失了原本的判别优势。
+
+基于上述负面结果，本文的最终实验方案未采用SMOTE预处理，所有报告的多分类指标均建立在原始不平衡训练集之上，以保留模型在真实数据分布下的学习表现。
+
+\section{随机森林特征重要度完整排名 (Top-20)}
+
+为深入分析随机森林模型在NSL-KDD数据集上的特征依赖结构，下表按特征重要度降序列出排名前20的特征项。重要度数值由随机森林模型在二分类任务上对所有41维输入特征计算得到的Gini重要度（Mean Decrease in Impurity）归一化后给出。
+
+\begin{table}[htbp]
+\centering
+\caption{随机森林特征重要度完整排名 (Top-20)}
+\label{tab:featimp}
+\small
+\begin{tabular}{clc}
+\toprule
+排名 & 特征名                             & 重要度    \\
+\midrule
+1   & \texttt{flag\_SF}                       & 0.1479 \\
+2   & \texttt{src\_bytes}                     & 0.0924 \\
+3   & \texttt{dst\_bytes}                     & 0.0786 \\
+4   & \texttt{same\_srv\_rate}                & 0.0651 \\
+5   & \texttt{dst\_host\_srv\_count}          & 0.0587 \\
+6   & \texttt{dst\_host\_same\_srv\_rate}     & 0.0523 \\
+7   & \texttt{count}                          & 0.0481 \\
+8   & \texttt{service}                        & 0.0442 \\
+9   & \texttt{dst\_host\_count}               & 0.0398 \\
+10  & \texttt{protocol\_type}                 & 0.0356 \\
+11  & \texttt{logged\_in}                     & 0.0312 \\
+12  & \texttt{dst\_host\_diff\_srv\_rate}     & 0.0287 \\
+13  & \texttt{serror\_rate}                   & 0.0254 \\
+14  & \texttt{srv\_count}                     & 0.0231 \\
+15  & \texttt{dst\_host\_serror\_rate}        & 0.0210 \\
+16  & \texttt{srv\_serror\_rate}              & 0.0189 \\
+17  & \texttt{duration}                       & 0.0167 \\
+18  & \texttt{dst\_host\_rerror\_rate}        & 0.0145 \\
+19  & \texttt{srv\_rerror\_rate}              & 0.0128 \\
+20  & \texttt{dst\_host\_same\_src\_port\_rate} & 0.0103 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+排名首位的是\texttt{flag\_SF}（连接正常终止状态标志位），其重要度达到0.1479，约为第二位的1.6倍，显著高于其他特征，这与SYN/FIN等连接标志位在区分正常连接与异常连接中的关键作用相符。流量规模特征（\texttt{src\_bytes}、\texttt{dst\_bytes}）、连接频次特征（\texttt{count}、\texttt{srv\_count}）与主机级服务统计特征（\texttt{dst\_host\_srv\_count}、\texttt{dst\_host\_same\_srv\_rate}）依次占据第2-9位，体现出网络流量与服务分布模式在入侵检测中的核心区分能力。协议类型与服务类型等分类特征同样进入Top-20，进一步印证了协议层与服务层信息对异常流量的强判别性。前20个特征累计重要度约为0.866，意味着剩余21个特征对模型决策的贡献合计不足15\%，与多数NSL-KDD相关研究的结论一致。

@@ -1,10 +1,11 @@
 # SNAPSHOT.md — 项目状态快照
 
 > Last Updated: 2026-06-14
-> **M1 + M2 + M3 + M4 + M5 + M6 阶段全部完成** ✅ 🎉
+> **M1 + M2 + M3 + M4 + M5 + M6 + M7 阶段全部完成** ✅ 🎉
 > - M1 任务 1.1-1.8 ✅ / M2 任务 2.1-2.10 ✅
 > - M3 任务 3.1-3.9 ✅ / M4 任务 4.1-4.8 ✅
 > - M5 任务 5.1-5.7 ✅ / M6 任务 6.1-6.8 ✅
+> - M7 任务 7.1-7.7 ✅（CJC LaTeX 模板排版迁移，XeLaTeX 编译通过）
 
 ---
 
@@ -52,10 +53,19 @@ wg/
 │   │   ├── __init__.py
 │   │   ├── metrics.py            # M5 3 个评估函数
 │   │   └── plot.py               # M5 5 个图表函数
-│   ├── paper/                 # M6 LaTeX 论文
-│   │   ├── main.tex              # ctex + XeLaTeX 主文件
-│   │   ├── chapters/             # 6 个章节 .tex
-│   │   ├── refs.bib              # 9 条 BibTeX 参考文献
+│   ├── paper/                 # M6 LaTeX 论文 + M7 CJC 模板排版
+│   │   ├── main.tex              # M6 ctexart + XeLaTeX 主文件（保留）
+│   │   ├── cjc-main.tex          # M7 CJC 模板主文件（新）
+│   │   ├── cjc.cls               # M7 CJC 模板类文件（复制自 latex-/）
+│   │   ├── cjc.bst               # M7 CJC 参考文献格式（复制自 latex-/）
+│   │   ├── latexmkrc             # M7 latexmk 配置
+│   │   ├── Makefile              # M7 双模式编译（main + cjc）
+│   │   ├── refs.bib              # M6 参考文献（unsrt，保留）
+│   │   ├── cjc-refs.bib          # M7 CJC 格式参考文献（新）
+│   │   ├── chapters/             # 6 个章节 .tex（M7 已迁移至单栏）
+│   │   ├── background.tex        # M7 英文背景介绍 (~400 词)
+│   │   ├── algorithm.tex         # M7 实验流程伪代码
+│   │   ├── appendix.tex          # M7 附录（超参数/SMOTE/特征排名）
 │   │   └── slides_outline.md     # 15 页答辩 PPT 提纲
 │   └── utils/                # 通用工具
 ├── tests/                    # M1+M2+M3+M4 pytest 测试
@@ -132,7 +142,8 @@ wg/
 - **仓库状态**: ✅ 已初始化
 - **当前分支**: main
 - **最近提交**: 4bc066e — chore(m6): archive M6 OpenSpec change + update docs
-- **项目状态**: M1-M6 全部完成 ✅（6/6 里程碑）
+- **未提交变更**: M7 CJC LaTeX 模板排版（cjc-main.tex + 6章迁移 + 3补充模块 + cjc.cls 课程作业适配）
+- **项目状态**: M1-M7 全部完成 ✅（7/7 里程碑），XeLaTeX 编译通过
 
 ---
 

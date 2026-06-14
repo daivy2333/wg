@@ -24,3 +24,18 @@ Thumbs.db
 # Large data (keep zip, ignore extracted if needed)
 # dataset/KDDTrain+.txt
 # dataset/KDDTest+.txt
+
+# Paper build artifacts
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.toc
+paper/*.bbl
+paper/*.blg
+paper/*.xdv
+paper/*.synctex*
+paper/*.fls
+paper/*.fdb_latexmk
+
+# CJC template upstream (separate repo, copied .cls/.bst as needed)
+paper/latex-/

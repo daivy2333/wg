@@ -1,0 +1,138 @@
+% !TeX encoding = UTF-8
+% !TeX program = xelatex
+% ============================================================================
+% NSL-KDD 网络入侵检测系统 —— 课程论文 (CJC 模板)
+% 编译: latexmk -xelatex cjc-main.tex  或  make cjc
+% ============================================================================
+
+\documentclass{cjc}
+
+\usepackage{booktabs}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{siunitx}
+\usepackage{graphicx}
+\usepackage{float}
+
+\classsetup{
+  title        = {基于NSL-KDD数据集的网络入侵检测研究——传统机器学习与深度学习方法对比},
+  title*       = {Network Intrusion Detection Based on NSL-KDD Dataset: A Comparative Study of Traditional Machine Learning and Deep Learning Methods},
+  authors      = {
+    author1 = {
+      name         = {[TODO: 作者1姓名]},
+      name*        = {[TODO: Author1 Name]},
+      affiliations = {aff1},
+      biography    = {},
+      biography*   = {},
+      email        = {},
+    },
+    author2 = {
+      name         = {[TODO: 作者2姓名]},
+      name*        = {[TODO: Author2 Name]},
+      affiliations = {aff1},
+      biography    = {},
+      biography*   = {},
+      email        = {},
+    },
+    author3 = {
+      name         = {[TODO: 作者3姓名]},
+      name*        = {[TODO: Author3 Name]},
+      affiliations = {aff1},
+      biography    = {},
+      biography*   = {},
+      email        = {},
+      corresponding = true,
+    },
+  },
+  affiliations = {
+    aff1 = {
+      name  = {[TODO: 学校全名\ 学院全名, 城市 邮政编码]},
+      name* = {[TODO: School of ****, University Name, City ZipCode, Country]},
+    },
+  },
+  abstract     = {
+    本文基于NSL-KDD数据集（训练集125,973条，测试集22,544条），构建了一个完整的网络入侵检测系统（IDS）。
+    通过特征工程将原始41维特征降维至20维关键特征，对比评估了10种模型（包括决策树、随机森林等传统方法，
+    以及MLP、CNN、LSTM等深度学习方法）在二分类和多分类任务上的性能。
+    实验结果表明，在验证集上神经网络方法显著优于传统机器学习方法，MLP的AUC达到0.999；
+    但在统一测试集上两者性能差距缩小——MLP的F1值约为0.72，决策树约为0.76。
+    多分类任务受测试集15种训练未见攻击和小样本类别的双重制约，全量准确率上限约10\%。
+    本文系统分析了各模型的适用场景与局限性，为NSL-KDD入侵检测任务提供了全面的实验基准和方法论参考。
+  },
+  abstract*    = {
+    This paper presents a comprehensive network intrusion detection system (IDS) based on the NSL-KDD dataset
+    (125,973 training samples, 22,544 test samples). Through feature engineering, the original 41-dimensional
+    feature space is reduced to 20 key features. A total of 10 models are systematically compared, including
+    traditional machine learning methods (Decision Tree, Random Forest) and deep learning methods (MLP, CNN, LSTM),
+    evaluated on both binary classification and multi-class attack recognition tasks. Experimental results show
+    that deep learning methods significantly outperform traditional methods on the validation set, with MLP achieving
+    an AUC of 0.999. However, on the unified test set, the performance gap narrows considerably—MLP achieves an F1
+    score of approximately 0.72, while Decision Tree reaches 0.76. Multi-class classification is constrained by
+    15 unseen attack types in the test set and extreme class imbalance, with full accuracy capped at approximately
+    10\%. This paper provides a comprehensive experimental benchmark and methodological reference for NSL-KDD
+    intrusion detection research.
+  },
+  keywords     = {网络入侵检测, NSL-KDD, 机器学习, 深度学习, 决策树, 随机森林, 对比分析},
+  keywords*    = {network intrusion detection, NSL-KDD, machine learning, deep learning, decision tree, random forest, comparative analysis},
+  clc          = {},
+  doi          = {},
+}
+
+\newcommand\dif{\mathop{}\!\mathrm{d}}
+
+% Graphics path
+\graphicspath{{../outputs/figures/}}
+
+% hyperref always loaded last in preamble
+\usepackage{hyperref}
+
+% Course assignment: suppress journal-specific header/footer on first page
+\fancypagestyle{title}{%
+  \fancyhf{}%
+  \renewcommand{\headrulewidth}{0pt}%
+}
+
+
+\begin{document}
+
+\maketitle
+
+% ============================
+% Chapters
+% ============================
+\input{chapters/ch1-intro}
+\input{chapters/ch2-preprocess}
+\input{chapters/ch3-ml}
+\input{chapters/ch4-dl}
+\input{chapters/ch5-comparison}
+\input{chapters/ch6-conclusion}
+
+% ============================
+% Acknowledgments
+% ============================
+\begin{acknowledgments}
+  本文工作得益于NSL-KDD数据集的开放共享以及scikit-learn、PyTorch等开源工具链的支持，在此表示感谢。
+\end{acknowledgments}
+
+% ============================
+% References
+% ============================
+\bibliographystyle{cjc}
+\bibliography{cjc-refs}
+
+
+% ============================
+% Background (English)
+% ============================
+\input{background}
+
+
+% ============================
+% Appendix
+% ============================
+\newpage
+\appendix
+\input{appendix}
+\input{algorithm}
+
+\end{document}

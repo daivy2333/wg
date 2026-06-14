@@ -1,6 +1,6 @@
 # Learned Spec
 
-> Version: 1.4.0 | Last Updated: 2026-06-14（M6 论文完成，项目 M1-M6 全部完工）
+> Version: 1.5.0 | Last Updated: 2026-06-14（M7 CJC模板排版完成，项目 M1-M7 全部完结）
 
 ## Purpose
 
@@ -391,4 +391,34 @@ def predict(self, x):
 | `paper/chapters/ch6-conclusion.tex` | M6 Ch6 | 总结展望，1694字，3局限+5未来 |
 | `paper/refs.bib` | M6 参考文献 | 9 条（NSL-KDD, sklearn, PyTorch, SMOTE, 3中文）|
 | `paper/slides_outline.md` | M6 PPT提纲 | 15 slides，15张图引用 |
+| `paper/cjc-main.tex` | M7 CJC 模板主文件 | \classsetup 元数据 + 6章 + 补充模块 |
+| `paper/cjc.cls` | M7 CJC 文档类 | 已打课程作业补丁（去除 CLC/DOI/日期） |
+| `paper/cjc.bst` | M7 CJC 参考文献格式 | 顺序引用，number=卷/volume=期 |
+| `paper/cjc-refs.bib` | M7 CJC 格式参考文献 | 9条，volume/number字段已适配 |
+| `paper/background.tex` | M7 英文背景 | ~400词，background 环境 |
+| `paper/algorithm.tex` | M7 算法伪代码 | 2个算法：实验总流程 + 训练评估循环 |
+| `paper/appendix.tex` | M7 附录 | 3节：超参数表 + SMOTE对比 + Top-20特征 |
 | `README.md` | 项目指南 | 252行，5步复现流程 |
+
+## 踩坑档案
+
+<!-- 踩坑-008 -->
+### 踩坑-008: CJC 模板 `\classsetup` 字段不能随意删除
+
+- **症状**: 编译报错 `Undefined control sequence. \class@@biography` / `\class@@email`
+- **根因**: CJC 模板的 author handler (`\KVS@class@authors@handler`) 在渲染作者信息时强制访问 `biography`、`email` 等字段。即使你不打算显示这些信息，只要定义了 author 就必须提供这些字段（可设为空 `{}`），否则宏展开时访问未定义的控制序列导致崩溃。
+- **解决**:
+  1. 不要在 `\classsetup{authors={...}}` 中删除 `biography`、`biography*`、`email` 字段
+  2. 若想隐藏，设为空值：`biography = {}, biography* = {}, email = {}`
+  3. 同样，`received-date`、`revised-date` 等字段如果设空 `{}` 也会导致日期解析器崩溃——正确做法是不设这些字段（模板默认不显示）
+- **预防**: 修改模板 classsetup 时，只修改字段内容（或注释整个字段行），不删除字段名
+- **关联**: M7-CJC模板迁移
+
+<!-- 踩坑-009 -->
+### 踩坑-009: CJC 模板下 `\includegraphics[width=\textwidth]` 宽度溢出
+
+- **症状**: 编译产生 `Overfull \hbox (252.51822pt too wide)`，图片宽度约为版心 2 倍
+- **根因**: CJC 模板的 `\textwidth`（约 425pt）在 figure 浮体内与 PNG 的 DPI 元数据产生冲突，XeTeX 计算图片缩放因子时出现异常，导致图片以原始像素宽渲染而非约束到 `\textwidth`
+- **解决**: 将所有 `\includegraphics[width=\textwidth]` 改为 `[width=\columnwidth]`。在 CJC 单栏布局下 `\columnwidth` 与 `\textwidth` 语义相同但缩放计算更可靠
+- **预防**: 跨模板迁移论文时，图片宽度优先使用 `\columnwidth` 而非 `\textwidth`
+- **关联**: M7-CJC模板迁移、O-M7-03

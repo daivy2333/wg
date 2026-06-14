@@ -49,7 +49,7 @@ f1=0.7621、AUC=0.7821。
 因为类别权重机制只能调整训练集已存在类别的损失贡献，对零样本 (zero-shot) 类别天然失效。
 该结果在混淆矩阵上表现为所有预测几乎全部塌缩到 Normal 与少数几个高频攻击类别，
 验证了传统监督学习在开放世界攻击识别上的本质局限。
-图~\ref{fig:cm-dt} 给出了 DT 在二分类任务上的混淆矩阵热力图，
+图9 给出了 DT 在二分类任务上的混淆矩阵热力图，
 可见正常样本被大量正确识别 (深蓝主对角线)，但攻击侧的假阴性比例仍然偏高。
 
 \begin{figure}[H]
@@ -87,10 +87,10 @@ f1=0.6882、AUC=0.9150。
 \subsubsection{特征重要度分析}
 
 随机森林的 Gini 重要度 (Mean Decrease in Gini) 为我们提供了宝贵的可解释性视角。
-表~\ref{tab:rf-importance} 列出了重要度 Top-10 的特征，
-完整 Top-20 分布如图~\ref{fig:rf-importance} 所示。
+表2 列出了重要度 Top-10 的特征，
+完整 Top-20 分布如图10 所示。
 
-\begin{table*}[H]
+\begin{table}[H]
   \centering
   \caption{随机森林特征重要度 Top-10}
   \label{tab:rf-importance}
@@ -110,7 +110,7 @@ f1=0.6882、AUC=0.9150。
     10 & \texttt{serror\_rate}             & 0.038 \\
     \bottomrule
   \end{tabular}
-\end{table*}
+\end{table}
 
 值得注意的是，$\texttt{flag\_SF}$ (TCP 标志位 SYN-FIN 同时置位) 以 14.8\% 的重要度位居首位，
 这一异常标志组合是多种扫描与拒绝服务攻击的典型指纹，
@@ -118,18 +118,18 @@ f1=0.6882、AUC=0.9150。
 此外，服务连接统计类特征 ($\texttt{same\_srv\_rate}$、$\texttt{dst\_host\_srv\_count}$) 占据 Top-5 中的三席，
 印证了网络流量时序结构对异常检测的关键价值。
 
-\begin{figure*}[H]
+\begin{figure}[H]
   \centering
-  \includegraphics[width=\textwidth]{08_feature_importance_top20.png}
+  \includegraphics[width=\columnwidth]{08_feature_importance_top20.png}
   \caption{随机森林特征重要度 Top-20}
   \label{fig:rf-importance}
-\end{figure*}
+\end{figure}
 
 \subsubsection{多分类实验}
 
 与决策树情况相同，RF 多分类测试集 acc=0.0464、macro-F1=0.0166，
 几乎等于随机猜测水平。
-图~\ref{fig:cm-rf} 的混淆矩阵显示，预测集中分布在 Normal 列，
+图11 的混淆矩阵显示，预测集中分布在 Normal 列，
 攻击侧的召回率接近零，再次印证零样本攻击类别对监督学习框架的颠覆性挑战。
 
 \begin{figure}[H]
@@ -141,12 +141,13 @@ f1=0.6882、AUC=0.9150。
 
 \subsection{模型对比与局限}
 
-表~\ref{tab:dt-rf-compare} 给出了 DT 与 RF 在基线和调优后的二分类性能横向对比。
+表3 给出了 DT 与 RF 在基线和调优后的二分类性能横向对比。
 
-\begin{table*}[H]
+\begin{table}[H]
   \centering
   \caption{决策树与随机森林二分类性能对比}
   \label{tab:dt-rf-compare}
+  \small
   \begin{tabular}{lccccc}
     \toprule
     模型配置 & acc & precision & recall & f1 & AUC \\
@@ -157,7 +158,7 @@ f1=0.6882、AUC=0.9150。
     RF 调优后       & 0.7234 & 0.9602 & 0.5363 & 0.6882 & 0.9150 \\
     \bottomrule
   \end{tabular}
-\end{table*}
+\end{table}
 
 从对比中可以提炼三条关键观察：
 

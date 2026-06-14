@@ -1,0 +1,120 @@
+% ============================================================================
+% algorithm.tex —— NSL-KDD 入侵检测实验流程伪代码
+% 通过 \input{algorithm} 由 cjc-main.tex 在附录部分引入
+% 依赖宏包 (cjc.cls 已自动加载): algorithm, algorithmic
+% 关键字 (IF / FOR / WHILE / STATE / REQUIRE / ENSURE) 由 cjc.cls
+% 重定义为粗体大写; 流程编号前缀由 \floatname{algorithm}{算法} 控制
+% ============================================================================
+
+\begin{algorithm}
+  \caption{NSL-KDD入侵检测实验总流程}
+  \label{alg:nsl-kdd-pipeline}
+  \small
+  \begin{algorithmic}
+    \REQUIRE 训练文件 \textit{KDDTrain+.txt}, 测试文件 \textit{KDDTest+.txt}; 任务类型
+             \textit{task} $\in \{$\textit{binary}, \textit{multi}$\}$; 随机种子 \textit{seed}
+    \ENSURE 全模型测试集评估结果 \textit{results} $= \{(\textit{name}_i,\, \textit{metrics}_i)\}_{i=1}^{N}$
+           与可视化产物 \textit{figures}
+    \STATE \COMMENT{数据加载: 41 维特征 + 1 维标签 + 1 维 difficulty, 删去 difficulty 列}
+    \STATE $\textit{df\_tr},\, \textit{df\_te} \gets \textit{loader.load}(\textit{KDDTrain+},\, \textit{KDDTest+})$
+    \STATE \COMMENT{分类特征独热编码: protocol\_type(3) + service(70) + flag(11), 41 维 $\to$ 53 维}
+    \STATE $\textit{X\_raw\_tr},\, \textit{X\_raw\_te} \gets \textit{preprocessor.one\_hot}(\textit{df\_tr},\, \textit{df\_te})$
+    \IF{$\textit{task} = \textit{binary}$}
+      \STATE \COMMENT{二分类标签: normal $\to 0$, 任意攻击 $\to 1$}
+      \STATE $\textit{y\_tr},\, \textit{y\_te} \gets \textit{preprocessor.encode\_binary}(\textit{df\_tr},\, \textit{df\_te})$
+    \ELSE
+      \STATE \COMMENT{多分类标签: 5 大类 (Normal / DoS / Probe / R2L / U2R);
+                       测试集 15 种训练未见攻击保留为独立 Unknown 类}
+      \STATE $\textit{y\_tr},\, \textit{y\_te} \gets \textit{preprocessor.encode\_multiclass}(\textit{df\_tr},\, \textit{df\_te})$
+    \ENDIF
+    \STATE \COMMENT{数值特征标准化 $z = (x - \mu)/\sigma$, 仅在训练集上拟合以避免测试集信息泄露}
+    \STATE $\textit{scaler} \gets \textit{StandardScaler}()$
+    \STATE $\textit{X\_std\_tr} \gets \textit{scaler.fit\_transform}(\textit{X\_raw\_tr})$
+    \STATE $\textit{X\_std\_te} \gets \textit{scaler.transform}(\textit{X\_raw\_te})$
+    \STATE \COMMENT{特征选择: 方差阈值剔除稀疏列, 再以随机森林重要度取 Top-20 (53 $\to$ 32 $\to$ 20)}
+    \STATE $\textit{X\_vt\_tr},\, \textit{X\_vt\_te} \gets \textit{selector.variance\_filter}(\textit{X\_std\_tr},\, \textit{X\_std\_te})$
+    \STATE $\textit{imp} \gets \textit{selector.rf\_importance}(\textit{X\_vt\_tr},\, \textit{y\_tr},\, n=200,\, \textit{seed}=\textit{seed})$
+    \STATE $\textit{top20} \gets \textit{selector.top\_k}(\textit{imp},\, k=20)$
+    \STATE $\textit{X\_sel\_tr} \gets \textit{X\_vt\_tr}[\textit{top20}]$
+    \STATE $\textit{X\_sel\_te} \gets \textit{X\_vt\_te}[\textit{top20}]$
+    \STATE \COMMENT{在训练集内部按 9:1 切出验证集, 用于深度模型早停与 MLP 调优; 测试集始终保持官方划分}
+    \STATE $(\textit{X\_tr},\, \textit{X\_va},\, \textit{y\_tr\_in},\, \textit{y\_va}) \gets \textit{split}(\textit{X\_sel\_tr},\, \textit{y\_tr},\, \textit{ratio}=0.1,\, \textit{stratify}=\textit{y\_tr})$
+    \STATE \COMMENT{根据任务类型获取模型注册表: 二分类含 CNN / LSTM, 多分类仅含传统 ML}
+    \STATE $\textit{registry} \gets \textit{ModelRegistry.get}(\textit{task})$
+    \STATE $\textit{results} \gets \emptyset$
+    \FOR{每个模型构造器 \textit{builder} $\in$ \textit{registry}}
+      \STATE \COMMENT{调用算法 2 完成单个模型的训练与测试集评估}
+      \STATE $\textit{metrics} \gets \textit{TrainEvaluate}(\textit{builder},\, \textit{X\_tr},\, \textit{y\_tr\_in},\, \textit{X\_va},\, \textit{y\_va},\, \textit{X\_sel\_te},\, \textit{y\_te},\, \textit{task},\, \textit{seed})$
+      \STATE $\textit{results}.\textit{append}((\textit{builder}.\textit{name},\, \textit{metrics}))$
+    \ENDFOR
+    \STATE \COMMENT{生成对比表、混淆矩阵与 ROC 曲线, 输出至 \textit{outputs/figures/}}
+    \STATE $\textit{plot.render}(\textit{results},\, \textit{task})$
+    \STATE \COMMENT{指标落盘: \textit{outputs/metrics\_m5.json}}
+    \STATE $\textit{metrics\_io.save}(\textit{results},\, \textit{task})$
+    \RETURN \textit{results}
+  \end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+  \caption{模型训练与评估循环}
+  \label{alg:train-evaluate}
+  \small
+  \begin{algorithmic}
+    \REQUIRE 模型构造器 \textit{builder}; 训练集 $(\textit{X\_tr},\, \textit{y\_tr})$,
+             验证集 $(\textit{X\_va},\, \textit{y\_va})$,
+             测试集 $(\textit{X\_te},\, \textit{y\_te})$; 任务类型 \textit{task}; 随机种子 \textit{seed}
+    \ENSURE 测试集指标字典 $\{\textit{acc},\, \textit{prec},\, \textit{rec},\, F_1,\, \textit{AUC},\, \textit{infer\_time}\}$
+    \STATE \COMMENT{实例化模型: 深度模型构建神经网络, 基线模型构建 sklearn 估计器}
+    \STATE $\textit{model} \gets \textit{builder}(\textit{in\_dim}=\textit{X\_tr}.\textit{shape}[1],\, \textit{out\_dim}=|\textit{classes}|,\, \textit{seed}=\textit{seed})$
+    \IF{$\textit{builder.family} = \textit{deep}$}
+      \STATE \COMMENT{深度模型 (CNN / LSTM): 按 epoch 循环训练, 验证集损失连续 5 轮未降则触发早停, Adam 优化器}
+      \STATE $\textit{patience\_left} \gets 5$
+      \STATE $\textit{best\_val\_loss} \gets +\infty$
+      \WHILE{$\textit{patience\_left} > 0$ \AND $\textit{epoch} < 50$}
+        \STATE $\textit{model.fit\_one\_epoch}(\textit{X\_tr},\, \textit{y\_tr},\, \textit{batch}=64)$
+        \STATE $\textit{val\_loss} \gets \textit{model.evaluate}(\textit{X\_va},\, \textit{y\_va})$
+        \IF{$\textit{val\_loss} < \textit{best\_val\_loss}$}
+          \STATE $\textit{best\_val\_loss} \gets \textit{val\_loss}$
+          \STATE $\textit{patience\_left} \gets 5$
+          \STATE $\textit{checkpoint.save}(\textit{model},\, \textit{builder.name})$
+        \ELSE
+          \STATE $\textit{patience\_left} \gets \textit{patience\_left} - 1$
+        \ENDIF
+      \ENDWHILE
+    \ELSE
+      \IF{$\textit{builder.name} = \textit{MLP\_tuned}$}
+        \STATE \COMMENT{MLP 调优: 对隐层、dropout、学习率做 5 折网格搜索, 以 $F_1^{\textit{macro}}$ 为评分}
+        \STATE $\textit{grid} \gets \{\textit{hidden}\!:\!\{64,128,256\},\ \textit{dropout}\!:\!\{0.2,0.3,0.5\},\ \textit{lr}\!:\!\{10^{-3},\, 5\!\cdot\!10^{-4}\}\}$
+        \STATE $\textit{model} \gets \textit{GridSearchCV}(\textit{model},\, \textit{grid},\, cv=5,\, \textit{scoring}=F_1^{\textit{macro}})$
+        \STATE $\textit{model.fit}(\textit{X\_tr},\, \textit{y\_tr})$
+      \ELSE
+        \STATE \COMMENT{基线模型 (DT / RF / MLP\_base): 直接在训练集上拟合}
+        \STATE $\textit{model.fit}(\textit{X\_tr},\, \textit{y\_tr})$
+      \ENDIF
+    \ENDIF
+    \STATE \COMMENT{在统一测试集 \textit{X\_te} 上预测并记录推理耗时}
+    \STATE $\textit{t}_0 \gets \textit{time.now}()$
+    \STATE $\hat{y} \gets \textit{model.predict}(\textit{X\_te})$
+    \STATE $\textit{infer\_time} \gets \textit{time.now}() - \textit{t}_0$
+    \IF{$\textit{task} = \textit{binary}$}
+      \STATE \COMMENT{二分类: 提取正类概率, P / R / F1 用 binary 平均}
+      \STATE $s \gets \textit{model.predict\_proba}(\textit{X\_te})[:, 1]$
+      \STATE $\textit{acc} \gets \textit{metrics.accuracy}(\textit{y\_te},\, \hat{y})$
+      \STATE $\textit{prec},\, \textit{rec},\, F_1 \gets \textit{metrics.prf}(\textit{y\_te},\, \hat{y},\, \textit{average}=\textit{binary})$
+      \STATE $\textit{AUC} \gets \textit{metrics.roc\_auc}(\textit{y\_te},\, s)$
+    \ELSE
+      \STATE \COMMENT{多分类: macro 平均; AUC 用 One-vs-Rest 多类策略}
+      \STATE $S \gets \textit{model.predict\_proba}(\textit{X\_te})$
+      \STATE $\textit{acc} \gets \textit{metrics.accuracy}(\textit{y\_te},\, \hat{y})$
+      \STATE $\textit{prec},\, \textit{rec},\, F_1 \gets \textit{metrics.prf}(\textit{y\_te},\, \hat{y},\, \textit{average}=\textit{macro})$
+      \STATE $\textit{AUC} \gets \textit{metrics.roc\_auc}(\textit{y\_te},\, S,\, \textit{average}=\textit{macro},\, \textit{multi\_class}=\textit{ovr})$
+    \ENDIF
+    \STATE \COMMENT{持久化模型: sklearn 存为 .joblib, 深度模型存为 .pt, 指标写入 \textit{metrics\_m5.json}}
+    \IF{$\textit{builder.family} = \textit{deep}$}
+      \STATE $\textit{persistence.save\_torch}(\textit{model},\, \textit{builder.name},\, \textit{task})$
+    \ELSE
+      \STATE $\textit{persistence.save\_sklearn}(\textit{model},\, \textit{builder.name},\, \textit{task})$
+    \ENDIF
+    \RETURN $\{\textit{acc},\, \textit{prec},\, \textit{rec},\, F_1,\, \textit{AUC},\, \textit{infer\_time}\}$
+  \end{algorithmic}
+\end{algorithm}

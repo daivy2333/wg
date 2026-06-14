@@ -1,6 +1,6 @@
 # Architecture Spec
 
-> Version: 1.4.0 | Last Updated: 2026-06-14（M6 新增 ADR-010）
+> Version: 1.5.0 | Last Updated: 2026-06-14（M7 新增 ADR-011）
 
 ## Purpose
 
@@ -232,4 +232,24 @@
 - **替代方案**:
   - Word 文档：所见即所得但版本控制不友好，图表管理繁琐
   - Overleaf 在线 LaTeX：协作方便但依赖网络
-  - Markdown + Pandoc 转 LaTeX：转换过程可能丢失格式细节
+   - Markdown + Pandoc 转 LaTeX：转换过程可能丢失格式细节
+
+### ADR-011: M7 论文迁移至 CJC 模板（课程作业适配）
+
+- **决策**: 将 M6 论文从 `ctexart` + 双栏排版迁移至 CJC（《计算机学报》）LaTeX 模板 `cjc.cls`，并针对课程作业场景做了轻量适配
+- **原因**:
+  1. CJC 模板提供标准化的 `\classsetup{}` 双语元数据（标题/摘要/关键词中英双语）
+  2. 模板内置 `algorithm`/`procedure`/`background`/`appendix` 等期刊必需环境
+  3. `cjc.bst` 顺序引用格式相比 `unsrt` 更符合中文期刊规范
+  4. 课程作业适配：去除 CLC 分类号、DOI、收稿/修改日期、作者简介、基金信息
+- **影响**:
+  - 新建 `paper/cjc-main.tex`（主文件），保留原 `paper/main.tex`（M6 参考）
+  - 6 章 `figure*`/`table*` → `figure`/`table`，`\columnwidth` → `\columnwidth`
+  - 新建 `paper/background.tex`（~400 词英文背景）、`paper/algorithm.tex`（2 算法）、`paper/appendix.tex`（3 节附录）
+  - `paper/cjc.cls` 打 2 处课程作业补丁（注释 CLC/DOI 和日期渲染行）
+  - 图片引用从 `\ref{fig:*}` 改为硬编码 `图1-16`，消除交叉引用编译依赖
+  - 编译命令：`latexmk -xelatex cjc-main.tex` 或 `make cjc`
+- **替代方案**:
+  - 继续用 `ctexart` 排版：排版自由但缺期刊标准格式，不利投稿
+  - Word 模板：排版可控但版本管理困难
+
