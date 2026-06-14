@@ -52,7 +52,7 @@ f1=0.7621、AUC=0.7821。
 图9 给出了 DT 在二分类任务上的混淆矩阵热力图，
 可见正常样本被大量正确识别 (深蓝主对角线)，但攻击侧的假阴性比例仍然偏高。
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=\columnwidth]{09_confusion_matrix_dt.png}
   \caption{决策树二分类混淆矩阵}
@@ -110,7 +110,7 @@ f1=0.6882、AUC=0.9150。
 图11 的混淆矩阵显示，预测集中分布在 Normal 列，
 攻击侧的召回率接近零，再次印证零样本攻击类别对监督学习框架的颠覆性挑战。
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=\columnwidth]{09_confusion_matrix_rf.png}
   \caption{随机森林二分类混淆矩阵}
