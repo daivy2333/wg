@@ -1,9 +1,10 @@
 # SNAPSHOT.md — 项目状态快照
 
 > Last Updated: 2026-06-14
-> **M1 + M2 + M3 + M4 阶段全部完成** ✅
+> **M1 + M2 + M3 + M4 + M5 阶段全部完成** ✅
 > - M1 任务 1.1-1.8 ✅ / M2 任务 2.1-2.10 ✅
 > - M3 任务 3.1-3.9 ✅ / M4 任务 4.1-4.8 ✅
+> - M5 任务 5.1-5.7 ✅（10 模型统一测试集重评估 + 7 图 + 9 章报告）
 
 ---
 
@@ -47,7 +48,10 @@ wg/
 │   │   ├── mlp.py               # M4 MLP（基线/调优/多分类）
 │   │   ├── cnn.py               # M4 1D CNN
 │   │   └── lstm.py              # M4 LSTM
-│   ├── evaluation/           # M5 占位
+│   ├── evaluation/           # M5 评估模块
+│   │   ├── __init__.py           # 公开 API 导出
+│   │   ├── metrics.py            # M5 3 个评估函数（二分类/多分类/分类F1）
+│   │   └── plot.py               # M5 5 个 matplotlib 图表函数
 │   └── utils/                # 通用工具
 ├── tests/                    # M1+M2+M3+M4 pytest 测试
 │   ├── conftest.py              # M3 WSL 兼容 + M4 torch 三防
@@ -64,22 +68,28 @@ wg/
 │   ├── test_lstm.py             # M4 7 tests
 │   ├── test_smote.py            # M4 5 tests
 │   ├── test_nn_persistence.py   # M4 8 tests
-│   └── test_grid_search_mlp.py  # M4 2 tests
+│   ├── test_evaluation_metrics.py  # M5 8 tests
+│   ├── test_evaluation_plot.py     # M5 6 tests
 ├── scripts/
 │   ├── train_m3.py              # M3 编排脚本（n_jobs=4 智能调节）
 │   ├── train_m4.py              # M4 编排脚本（torch 智能公式）
-│   └── run_smote_only.py        # M4 SMOTE 单独运行
+│   ├── run_smote_only.py        # M4 SMOTE 单独运行
+│   └── evaluate_m5.py           # M5 对比分析编排（10 模型 + 7 图 + 报告）
 ├── notebooks/
 │   └── 01_data_exploration.py   # M2 EDA 脚本（14 场景）
-├── outputs/                  # M2 + M3 + M4 输出
+├── outputs/                  # M2 + M3 + M4 + M5 输出
 │   ├── processed/            # 8 个 .pkl 文件
-│   ├── figures/              # 8 个分析图表 PNG
+│   ├── figures/              # 15 个分析图表 PNG（M2: 8, M5: 7）
 │   ├── models/               # 4 个 .joblib (M3) + 6 个 .pt (M4)
-│   └── metrics_m4.json        # M4 训练指标
+│   ├── metrics_m4.json        # M4 训练指标
+│   ├── metrics_m5.json        # M5 统一测试集指标（10 模型）
+│   ├── label_id_to_name.json  # M5 40 个攻击名映射
+│   └── label_id_to_category.json  # M5 40 个分类映射
 ├── docs/
 │   ├── eda_report.md             # M2 EDA 报告
 │   ├── model_report_dt_rf.md     # M3 DT/RF 训练报告
-│   └── model_report_mlp_dl.md    # M4 MLP/CNN/LSTM 训练报告
+│   ├── model_report_mlp_dl.md    # M4 MLP/CNN/LSTM 训练报告
+│   └── comparison_report.md      # M5 9 章节对比分析报告
 ├── openspec/changes/         # OpenSpec 变更管理
 │   ├── archive/
 │   │   ├── 2026-06-14-m1-infrastructure/
@@ -115,9 +125,9 @@ wg/
 
 - **仓库状态**: ✅ 已初始化
 - **当前分支**: main
-- **最近提交**: 7c9960f — docs: 全面更新文档至 M1+M2+M3 完成状态
-- **M4 状态**: 实施 + 测试 + 训练 + 归档全部完成，待 git commit
-- **OpenSpec 活跃变更**: 无（M1+M2+M3+M4 均已归档至 `openspec/changes/archive/`）
+- **最近提交**: 60c8e06 — feat(m5): add comparison report + 7 figures + OpenSpec change
+- **M5 状态**: 实施 + 测试 + 全部产出 + git commit 完成（3 atomic commits）
+- **OpenSpec 活跃变更**: m5-comparison-analysis（待归档）
 
 ---
 
@@ -129,9 +139,12 @@ wg/
 | `dataset/archive.zip` | NSL-KDD 数据集 | 14MB，待解压 |
 | `openspec/config.yaml` | OpenSpec 配置 | schema: spec-driven |
 | `openspec/specs/architecture/spec.md` | 架构决策 | 含 5 条 ADR（A01-A05）|
-| `openspec/specs/learned/spec.md` | 学习记忆 | 含 6 条踩坑档案 + 6 个技巧模式（M4 新增踩坑-004/005/006 + 模式-005/006）|
+| `openspec/specs/learned/spec.md` | 学习记忆 | 含 7 条踩坑档案 + 6 个技巧模式（M5 新增踩坑-007）|
 | `openspec/specs/references/spec.md` | 外部参考 | 依赖表 + 学术资源 |
-| `openspec/specs/optimization/spec.md` | 优化记录 | 11 条优化点（M4 新增 O-PYTORCH-WSL-01 + O-NN-01/02/03/04）|
+| `openspec/specs/optimization/spec.md` | 优化记录 | 12 条优化点（M5 新增 O-M5-01）|
+| `scripts/evaluate_m5.py` | M5 编排脚本 | 10 模型加载+评估+图表+报告 |
+| `src/evaluation/metrics.py` | M5 评估函数 | 3 个模型无关的指标计算函数 |
+| `src/evaluation/plot.py` | M5 可视化函数 | 5 个 matplotlib 图表生成函数 |
 
 ---
 
@@ -155,39 +168,41 @@ wg/
 |------|--------|----------|----------|
 | A同学（数据方向） | — | 数据加载与探索、缺失值处理、特征标准化、数据集划分 | M1 + M2 全部完成 |
 | B同学（模型方向） | — | 决策树与随机森林模型搭建、模型调优、参数网格搜索 | M3 全部完成（9/9）|
-| C同学（对比分析） | — | MLP 神经网络搭建、模型评估、可视化图表、性能对比分析 | M4 全部完成（8/8）|
+| C同学（对比分析） | — | MLP 神经网络搭建、模型评估、可视化图表、性能对比分析 | M4 + M5 全部完成（8/8 + 7/7）|
 
 ---
 
-## 关键产物对比（M3 vs M4）
+## 关键产物对比（M5 统一测试集重评估）
 
-| 维度 | 指标 | M3 RF 调优 | **M4 MLP 调优** | M4 CNN | M4 LSTM |
-|------|------|------------|-----------------|--------|---------|
-| 二分类 | accuracy | 0.7234 | **0.9902** | 0.9650 | 0.9852 |
-| 二分类 | f1 | 0.6882 | **0.9894** | 0.9617 | 0.9840 |
-| 二分类 | auc | 0.9150 | **0.9992** | 0.9926 | 0.9987 |
-| 二分类 | recall | 0.5092 | **0.9856** | 0.9459 | 0.9779 |
-| 多分类 | full_acc | 0.0464 | **0.1009** | — | — |
-| 多分类 | f1_macro | 0.0166 | 0.0146 | — | — |
-| 多分类 | SMOTE+MLP | — | 0.0284（**副作用**）| — | — |
+| 维度 | 指标 | DT Tuned | RF Tuned | MLP Tuned | CNN | LSTM |
+|------|------|----------|----------|-----------|-----|------|
+| 二分类 | accuracy | 0.7755 | 0.7234 | 0.7445 | 0.7635 | 0.7427 |
+| 二分类 | f1 | 0.7621 | 0.6882 | 0.7202 | 0.7452 | 0.7161 |
+| 二分类 | auc | 0.7821 | 0.9150 | 0.9074 | 0.8820 | 0.8832 |
+| 多分类 | full_acc | 0.0456 | 0.0464 | **0.1009** | — | — |
+| 多分类 | known_acc | 0.0533 | 0.0542 | **0.1179** | — | — |
+| 多分类 | f1_macro | 0.0155 | 0.0166 | 0.0146 | — | — |
 
-**M4 关键结论**：
-- 🎯 **二分类 MLP 显著优于 RF**（f1 +30%, auc +8%, recall +47% — 几乎所有异常被捕获）
+> ⚠️ **M5 关键发现**：M4 报告中的 MLP f1=0.989 等指标基于训练集验证划分（validation split），M5 在统一测试集上重评估得到更保守的指标（MLP f1≈0.72）。深度学习模型在测试集上与 DT/RF 表现相近，M4 报告的高指标存在验证集偏差。
+
+**M4 关键结论**（M4 报告原始值，基于验证集）：
+- 🎯 **二分类 MLP 显著优于 RF**（f1 +30%, auc +8%, recall +47% — 几乎所有异常被捕获）— ⚠️ 此为验证集指标
 - 📈 **多分类 MLP 略优于 RF**（+117% acc，但受 unseen 攻击拖累）
 - ⚠️ **SMOTE 在本项目中失败**（full_acc -72%，副作用已诚实记录到 O-NN-01）
-- 📉 **tabular CNN/LSTM 略低于 MLP**（论文扩展性验证，详见 O-NN-03）
 
 ---
 
-## 关键经验（M1-M4 累计）
+## 关键经验（M1-M5 累计）
 
 | 类别 | 关键经验 | 来源 |
 |------|----------|------|
 | 环境 | WSL 下 conda 通过 shell 函数初始化，`which conda` 找不到 | 踩坑-001/002 |
 | 稳定性 | **ML 项目必须四层防御**（OMP/MKL/torch 线程 + CUDA 禁 + 测试间 gc）| 踩坑-003/004 |
 | 稳定性 | **生产脚本必须 `python -u`**，否则 stdout 缓冲误判"卡死" | 踩坑-005 |
+| 评估 | **验证集 ≠ 测试集**，M4 报告指标基于验证集，M5 统一测试集重评估发现 DL 模型与 DT 相近 | 踩坑-007 |
 | 评估 | **CV + Test 双数字必须同时报告**，避免 GridSearchCV 误导 | 模式-003 |
 | 数据 | **SMOTE 不是万能**，多类极不均衡（U2R 52 条）副作用 > 收益 | 踩坑-006 |
 | 框架 | **PyTorch 三层线程防御** + 模型 `device-aware` 是 WSL 必做 | 模式-005 |
+| 框架 | **PyTorch 模型 kwargs 必须精确匹配 MODEL_CONFIGS**，否则加载失败 | 踩坑-007 |
 | 持久化 | **PyTorch save state_dict 而非整个 model**，更轻 + 跨版本兼容 | ADR-005 + 实践 |
 | 报告 | **诚实记录局限 + 副作用**是合规研究的关键，0.10 → 0.03 也要写 | M3 §8 + M4 §8.5 |

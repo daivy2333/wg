@@ -1,6 +1,6 @@
 # Optimization Spec
 
-> Version: 1.2.0 | Last Updated: 2026-06-14（M4 训练补全，新增 O-NN-01/02/03/04 + O-PYTORCH-WSL-01）
+> Version: 1.3.0 | Last Updated: 2026-06-14（M5 完成，新增 O-M5-01 验证集偏差诚实记录）
 
 ## Purpose
 
@@ -55,6 +55,7 @@
 | 9 | MLP 多分类 unseen 攻击 | 全量 acc=0.101 但仍有 16 unseen 无法识别 | One-vs-Rest / Open-set Recognition | 中 | ⚠️ 部分缓解（2026-06-14，O-NN-02）|
 | 10 | tabular CNN/LSTM 价值有限 | CNN/LSTM 略低于 MLP | 仅作论文扩展性验证 | 低 | ✅ 已验证（2026-06-14，O-NN-03）|
 | 11 | MLP 调优边际收益小 | 6 组合 grid 仅 +0.11% f1 提升 | tabular MLP 较简单，可接受 baseline 直接用 | 低 | ✅ 已验证（2026-06-14，O-NN-04）|
+| 12 | M4 报告指标基于验证集非测试集 | 论文数据不可直接使用 M4 报告值 | M5 统一测试集重评估已完成，论文引用 M5 指标 | 高 | ✅ 已完成（2026-06-14，O-M5-01）|
 
 ## 优化点详情
 
@@ -169,3 +170,19 @@
   - 优先时间投入到特征工程 / 多分类策略（unseen 攻击）而非调优
 - **优先级**: 低
 - **状态**: ✅ 已验证（已诚实记录到 `docs/model_report_mlp_dl.md` §4.4）
+
+### O-M5-01: M4 报告指标基于验证集非测试集（M5 诚实纠正）
+
+- **问题**: M4 报告（`model_report_mlp_dl.md`）中 MLP f1=0.989 / auc=0.999 等指标基于训练集内部的验证划分（`train_val_split` 的 20% holdout），非独立测试集。验证集与训练集 IID，指标高估真实泛化能力。
+- **实际结果**（M5 统一测试集重评估）:
+  - MLP Tuned: f1 从 0.989 → 0.720（-27%），auc 从 0.999 → 0.907（-9%）
+  - CNN: f1 从 0.962 → 0.745（-22%）
+  - LSTM: f1 从 0.984 → 0.716（-27%）
+  - DT/RF 指标与 M3 报告一致（M3 用测试集评估，从未混淆）
+- **根因**: M4 训练流程用 `train_val_split(X_train, y_train)` 划分验证集，报告 `val_metrics`；而测试集分布不同（含 unseen 攻击 + 不同流量模式），验证集指标不反映真实泛化
+- **建议方案**:
+  - 论文中所有指标统一引用 M5 的测试集重评估值（`outputs/metrics_m5.json`）
+  - M4 报告中的验证集指标标注为"训练过程参考值，非最终评估"
+  - 未来训练脚本同时输出 test_metrics（不仅 val_metrics）
+- **优先级**: 高（直接影响论文数据可信度）
+- **状态**: ✅ 已完成（M5 统一测试集重评估产出 `metrics_m5.json` + `comparison_report.md`）

@@ -1,6 +1,6 @@
 # Learned Spec
 
-> Version: 1.2.0 | Last Updated: 2026-06-14（M4 训练补全，新增踩坑-004/005/006）
+> Version: 1.3.0 | Last Updated: 2026-06-14（M5 完成，新增踩坑-007 + 文件速查更新）
 
 ## Purpose
 
@@ -117,6 +117,20 @@
   - 实施后必须对比 baseline + 副作用记录（不能只看 acc 是否提升）
   - 论文中诚实记录"我们试了 SMOTE 但失败了"是合规的研究报告
 - **结论**: 任何数据增强/重采样方法实施后必须 baseline 对比，不能假设"对不均衡有效"
+
+### 踩坑-007: 验证集 vs 测试集指标差异（M5 发现）
+
+- **症状**: M4 报告 MLP 二分类 f1=0.989 / auc=0.999，M5 统一测试集重评估 f1=0.720 / auc=0.907（差距 27%）
+- **根因**: M4 训练时用 `train_val_split(X_train, y_train)` 划分 20% 训练数据作验证集，报告 `val_metrics`。验证集与训练集分布相同（IID），而测试集分布不同（含 unseen 攻击、不同流量模式）。验证集指标高估了真实泛化能力。
+- **解决方案**:
+  1. M5 在统一测试集上重评估全部 10 个模型，得到公平对比基线（DT f1=0.76, RF f1=0.69, MLP f1=0.72）
+  2. 论文中必须标注评估数据来源（"统一测试集 22,544 样本"），不可混淆验证/测试指标
+  3. 建立 MODEL_CONFIGS 字典精确记录 PyTorch 模型 kwargs（hidden_dims 等），避免加载时维度不匹配
+- **预防措施**:
+  - ML 实验流程中验证集仅用于早停/调参，最终报告必须用测试集指标
+  - 训练脚本同时保存 test_metrics（不只看验证集）
+  - 对比分析时所有模型必须在相同测试集上评估
+- **结论**: 验证集指标 ≠ 测试集指标；论文报告必须以测试集为准，验证集偏差可达 27%
 
 ## 技巧模式
 
@@ -366,3 +380,10 @@ def predict(self, x):
 | `docs/eda_report.md` | M2 EDA 报告 | 数据探索全流程与结论 |
 | `docs/model_report_dt_rf.md` | M3 训练报告 | DT/RF 10 章节，含多分类局限诚实记录 |
 | `docs/model_report_mlp_dl.md` | M4 训练报告 | MLP/CNN/LSTM 13 章节，含 SMOTE 副作用 |
+| `docs/comparison_report.md` | M5 对比报告 | 9 章节，10 模型测试集统一评估 |
+| `scripts/evaluate_m5.py` | M5 编排脚本 | 加载/评估/图表/报告一体化 |
+| `src/evaluation/metrics.py` | M5 评估函数 | compute_binary_metrics / multiclass / f1_by_category |
+| `src/evaluation/plot.py` | M5 图表函数 | 混淆矩阵/ROC/F1柱状图/特征重要度/DLvsML |
+| `outputs/metrics_m5.json` | M5 测试集指标 | 10 个模型的 accuracy/precision/recall/f1/auc |
+| `outputs/label_id_to_name.json` | M5 标签映射 | 40 个攻击名 ID→名称映射 |
+| `outputs/label_id_to_category.json` | M5 分类映射 | 40 个 ID→大类（DoS/Probe/R2L/U2R/Normal）|

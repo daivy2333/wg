@@ -1,6 +1,6 @@
 # Architecture Spec
 
-> Version: 1.2.0 | Last Updated: 2026-06-14（M4 新增 ADR-006 + ADR-007）
+> Version: 1.3.0 | Last Updated: 2026-06-14（M5 新增 ADR-008 + ADR-009）
 
 ## Purpose
 
@@ -175,6 +175,40 @@
   - O-PYTORCH-WSL-01（optimization 记录）
   - 模式-005（PyTorch 三层线程防御）
 - **替代方案**:
-  - 用 Docker 容器跑测试：环境隔离但学习成本高
-  - pytest-xdist 并行：WSL 下反而加剧资源竞争
-  - 减少测试数量：违反 TDD 完整性原则
+   - 用 Docker 容器跑测试：环境隔离但学习成本高
+   - pytest-xdist 并行：WSL 下反而加剧资源竞争
+   - 减少测试数量：违反 TDD 完整性原则
+
+### ADR-008: M5 统一测试集重评估原则
+
+- **决策**: M5 对比分析阶段所有模型必须在统一的独立测试集（`X_test.pkl` + `y_test.pkl`）上重新评估，不直接复用 M3/M4 报告的验证集指标
+- **原因**:
+  1. M4 报告指标基于训练集内部验证划分（`train_val_split`），与测试集分布不同（IID vs OOD），MLP f1 从 0.989→0.720（差距 27%）
+  2. M3 报告 DT/RF 用测试集评估但无机器可读 JSON 输出
+  3. 公平对比要求所有模型在相同数据上评估：相同特征（20 维 Top-K）、相同样本（22,544 条）、相同标签
+  4. 模型加载需精确 kwargs（MODEL_CONFIGS 字典），避免 PyTorch 维度不匹配
+- **影响**:
+  - `scripts/evaluate_m5.py` 加载 10 个模型统一 predict，输出 `metrics_m5.json`
+  - 论文所有指标引用 M5 的测试集值，M4 报告值标注为"训练参考值"
+  - src/evaluation/ 模块提供模型无关的评估函数（纯 sklearn/numpy，不绑定模型对象）
+  - 多分类评估使用 full_accuracy + known_class_accuracy 双数字（遵循 M4 `train_m4.py:96-130` 模式）
+- **替代方案**:
+  - 直接复用 M3/M4 报告指标：不可靠（验证集 vs 测试集混淆，指标虚高）
+  - 每个模型单独评估脚本：代码重复，不一致
+
+### ADR-009: 对比分析模块化架构（src/evaluation/ + scripts/）
+
+- **决策**: 评估逻辑分为两层——`src/evaluation/`（纯函数模块，无文件 I/O）+ `scripts/evaluate_m5.py`（编排脚本，文件 I/O + 模型加载）
+- **原因**:
+  1. 指标计算（`metrics.py`）和可视化（`plot.py`）是纯函数，可测试、可复用、模型无关
+  2. 编排脚本负责文件 I/O、模型加载、报告生成——遵循 M3 `train_m3.py` 编排风格
+  3. 两个模块可并行开发（仅依赖 API 签名合同），加速开发 55%
+  4. 评估函数不绑定具体模型对象（接受 `y_true/y_pred/y_prob` 数组），可用于任何模型
+- **影响**:
+  - `src/evaluation/metrics.py`：3 个函数（二分类/多分类/分类 F1），14 个测试
+  - `src/evaluation/plot.py`：5 个函数（混淆矩阵/ROC/柱状图/特征重要度/DLvsML），Agg 后端 + dpi=80
+  - 编排脚本内置 `compute_binary_metrics()` / `_get_probabilities()` 等 inline 函数（自包含，不依赖 src/evaluation 导入）
+  - 图表编号 09-13（M2 占 01-08），输出到 `outputs/figures/`
+- **替代方案**:
+  - 单文件脚本（`train_m3.py` 风格）：简单但不可测试，函数不可复用
+  - Notebook（`evaluate_m5.ipynb`）：交互式但不可自动化
