@@ -54,7 +54,7 @@ f1=0.7621、AUC=0.7821。
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.75\textwidth]{09_confusion_matrix_dt.png}
+  \includegraphics[width=\columnwidth]{09_confusion_matrix_dt.png}
   \caption{决策树二分类混淆矩阵}
   \label{fig:cm-dt}
 \end{figure}
@@ -118,12 +118,12 @@ f1=0.6882、AUC=0.9150。
 此外，服务连接统计类特征 ($\texttt{same\_srv\_rate}$、$\texttt{dst\_host\_srv\_count}$) 占据 Top-5 中的三席，
 印证了网络流量时序结构对异常检测的关键价值。
 
-\begin{figure}[H]
+\begin{figure*}[H]
   \centering
-  \includegraphics[width=0.95\textwidth]{08_feature_importance_top20.png}
+  \includegraphics[width=\textwidth]{08_feature_importance_top20.png}
   \caption{随机森林特征重要度 Top-20}
   \label{fig:rf-importance}
-\end{figure}
+\end{figure*}
 
 \subsubsection{多分类实验}
 
@@ -134,7 +134,7 @@ f1=0.6882、AUC=0.9150。
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.75\textwidth]{09_confusion_matrix_rf.png}
+  \includegraphics[width=\columnwidth]{09_confusion_matrix_rf.png}
   \caption{随机森林二分类混淆矩阵}
   \label{fig:cm-rf}
 \end{figure}
