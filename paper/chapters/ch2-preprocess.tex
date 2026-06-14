@@ -52,39 +52,39 @@ RF Top-20筛选 & 20 & 按重要度排序取前20 \\
 
 处理完成后的数据以pickle格式持久化，保存于\texttt{outputs/processed/}目录下，共生成8个文件，分别对应训练集与测试集的特征矩阵与标签向量的二分类与五分类版本，便于后续模型加载使用。
 
-\begin{figure}[htbp]
+\begin{figure*}[htbp]
 \centering
-\includegraphics[width=\columnwidth]{04_numeric_distributions.png}
+\includegraphics[width=\textwidth]{04_numeric_distributions.png}
 \caption{数值特征分布}
 \label{fig:ch2-numeric-dist}
-\end{figure}
+\end{figure*}
 
-\begin{figure}[htbp]
+\begin{figure*}[htbp]
 \centering
-\includegraphics[width=\columnwidth]{05_categorical_top10.png}
+\includegraphics[width=\textwidth]{05_categorical_top10.png}
 \caption{分类特征Top-10分布}
 \label{fig:ch2-categorical}
-\end{figure}
+\end{figure*}
 
-\begin{figure}[htbp]
+\begin{figure*}[htbp]
 \centering
-\includegraphics[width=\columnwidth]{06_correlation_heatmap.png}
+\includegraphics[width=\textwidth]{06_correlation_heatmap.png}
 \caption{数值特征相关系数热力图}
 \label{fig:ch2-correlation}
-\end{figure}
+\end{figure*}
 
-\begin{figure}[htbp]
+\begin{figure*}[htbp]
 \centering
-\includegraphics[width=\columnwidth]{07_log1p_before_after.png}
+\includegraphics[width=\textwidth]{07_log1p_before_after.png}
 \caption{log1p变换前后分布对比}
 \label{fig:ch2-log1p}
-\end{figure}
+\end{figure*}
 
-\begin{figure}[htbp]
+\begin{figure*}[htbp]
 \centering
-\includegraphics[width=\columnwidth]{08_feature_importance_top20.png}
+\includegraphics[width=\textwidth]{08_feature_importance_top20.png}
 \caption{随机森林Top-20特征重要度}
 \label{fig:ch2-importance}
-\end{figure}
+\end{figure*}
 
 经过上述预处理流程后，原始41维特征被压缩至20维关键特征，数据质量与可分性均得到明显改善，为下一章的模型构建奠定可靠的数据基础。第3章将基于本章产出的训练集与测试集，系统构建多种机器学习模型并进行对比实验。

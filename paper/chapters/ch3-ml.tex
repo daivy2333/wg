@@ -2,7 +2,7 @@
 % ============================================================================
 % Chapter 3: 传统机器学习模型
 % 涵盖决策树 (DT) 与随机森林 (RF) 的基线、网格搜索调优、多分类实验
-% 数据来源: outputs/metrics/ 下 dt_* 与 rf_* 系列 JSON
+% 数据来源: outputs/ 下模型评估 JSON
 % ============================================================================
 
 \section{传统机器学习模型}
@@ -94,36 +94,14 @@ f1=0.6882、AUC=0.9150。
   \centering
   \caption{随机森林特征重要度 Top-10}
   \label{tab:rf-importance}
-  \begin{tabular}{clc}
-    \toprule
-    排名 & 特征名 & 重要度 \\
-    \midrule
-    1  & \texttt{flag\_SF}                 & 0.148 \\
-    2  & \texttt{same\_srv\_rate}          & 0.108 \\
-    3  & \texttt{dst\_host\_srv\_count}    & 0.105 \\
-    4  & \texttt{dst\_host\_same\_srv\_rate}& 0.081 \\
-    5  & \texttt{diff\_srv\_rate}          & 0.076 \\
-    6  & \texttt{dst\_host\_count}         & 0.061 \\
-    7  & \texttt{logged\_in}               & 0.054 \\
-    8  & \texttt{service\_http}            & 0.049 \\
-    9  & \texttt{count}                    & 0.042 \\
-    10 & \texttt{serror\_rate}             & 0.038 \\
-    \bottomrule
-  \end{tabular}
 \end{table}
 
-值得注意的是，$\texttt{flag\_SF}$ (TCP 标志位 SYN-FIN 同时置位) 以 14.8\% 的重要度位居首位，
-这一异常标志组合是多种扫描与拒绝服务攻击的典型指纹，
-说明 TCP 协议层行为对入侵检测具有强判别性。
-此外，服务连接统计类特征 ($\texttt{same\_srv\_rate}$、$\texttt{dst\_host\_srv\_count}$) 占据 Top-5 中的三席，
-印证了网络流量时序结构对异常检测的关键价值。
-
-\begin{figure}[H]
+\begin{figure*}[H]
   \centering
-  \includegraphics[width=\columnwidth]{08_feature_importance_top20.png}
-  \caption{随机森林特征重要度 Top-20}
+  \includegraphics[width=\textwidth]{08_feature_importance_top20.png}
+  \caption{随机森林特征重要度 Top-20 分布}
   \label{fig:rf-importance}
-\end{figure}
+\end{figure*}
 
 \subsubsection{多分类实验}
 
