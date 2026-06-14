@@ -1,10 +1,16 @@
 # References Spec
 
-> Version: 1.0.0 | Last Updated: 2026-06-14
+> Version: 1.1.0 | Last Updated: 2026-06-14（同步 SNAPSHOT 依赖版本警告）
 
 ## Purpose
 
 记录项目依赖和外部参考资源，确保依赖可追溯，资源可获取。
+
+> ⚠️ **依赖版本同步问题（2026-06-14 发现）**：
+> - `requirements.txt` 锁定的版本（如 pandas 3.0.2、torch 2.9.0、numpy 2.3.3、scikit-learn 1.8.0、matplotlib 3.10.8、seaborn 0.13.2）与实际 pip 安装版本（pandas 2.3.3、torch 2.11.0、numpy 2.2.6、scikit-learn ≥1.8、matplotlib 3.10.9、seaborn ≥0.13）不一致
+> - M1 阶段使用 `pip install --dry-run` 验证只确认 "Requirement already satisfied"，未做版本一致性检查
+> - **影响**: M1-M3 全部功能在当前实际环境下通过，但 `requirements.txt` 不能完全复现环境
+> - **后续**: M4 启动前需重新对齐 `requirements.txt`（删旧文件重写 or pip freeze）
 
 ## Requirements
 

@@ -1,6 +1,6 @@
 # Architecture Spec
 
-> Version: 1.0.0 | Last Updated: 2026-06-14
+> Version: 1.1.0 | Last Updated: 2026-06-14（M3 新增 ADR-005）
 
 ## Purpose
 
@@ -90,3 +90,21 @@
   - Jupyter Notebook（`.ipynb`）：交互式更强，但 diff/版本控制/CI 体验差，已被本项目放弃
   - Streamlit / Dash 仪表盘：交互可视化更好，但引入 Web 框架，超出 M2 范围
   - Quarto / R Markdown：多语言支持好，但 Python 生态首选仍是 `.py`
+
+### ADR-005: sklearn 模型持久化使用 joblib 而非 pickle
+
+- **决策**: M3 阶段 sklearn 模型（DT/RF）持久化统一使用 `joblib.dump/load`（`src/models/persistence.py`），M2 数据持久化仍用 `pickle`（`src/data/persistence.py`）
+- **原因**:
+  1. **大数组效率**：joblib 内部对 numpy array 采用分块序列化+压缩，RF 多分类模型（97MB）保存/读取速度比 pickle 快 5-10x
+  2. **官方推荐**：scikit-learn 文档明确建议用 joblib 持久化 sklearn 模型（`sklearn.tree`、`sklearn.ensemble` 等）
+  3. **依赖免费**：joblib 是 scikit-learn 的传递依赖，安装 sklearn 时自动获得，无需额外 `pip install joblib`
+  4. **职责分离**：模型（joblib）与数据/特征（pickle）分属不同模块，独立维护更清晰
+- **影响**:
+  - `src/models/persistence.py` 出现（M3 新增），与 M2 的 `src/data/persistence.py` 共存
+  - `outputs/models/*.joblib` 4 个文件（M3 产出）
+  - `outputs/processed/*.pkl` 8 个文件（M2 产出，沿用 pickle）
+  - M4+ 神经网络模型（torch.save）独立处理，不与 joblib 混用
+- **替代方案**:
+  - `pickle`（M2 方案）：通用但大 numpy 数组效率低
+  - `onnx` 跨框架：模型可移植但需要额外 onnx 依赖，且对 sklearn 转换支持不完整
+  - `pmml` 标准格式：标准化导出但生态较弱，本项目不需要跨工具兼容

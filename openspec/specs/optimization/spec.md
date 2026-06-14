@@ -1,6 +1,6 @@
 # Optimization Spec
 
-> Version: 1.0.0 | Last Updated: 2026-06-14
+> Version: 1.1.0 | Last Updated: 2026-06-14（M3 训练补全，6 条记录已含 M3 优化点 #4 #5 #6）
 
 ## Purpose
 

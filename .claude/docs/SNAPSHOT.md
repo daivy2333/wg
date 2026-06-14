@@ -14,8 +14,11 @@ wg/
 │   └── archive.zip           # NSL-KDD 数据集（待解压）
 ├── openspec/
 │   ├── config.yaml           # OpenSpec 项目配置
-│   ├── changes/              # 变更提案目录
-│   │   └── m1-infrastructure/  # M1 变更（待归档）
+│   ├── changes/
+│   │   └── archive/          # 已归档变更
+│   │       ├── 2026-06-14-m1-infrastructure/
+│   │       ├── 2026-06-14-m2-data-exploration-and-preprocessing/
+│   │       └── 2026-06-14-m3-traditional-ml/
 │   └── specs/
 │       ├── architecture/     # 架构决策记录
 │       ├── learned/          # 学习记忆
@@ -55,8 +58,7 @@ wg/
 ├── docs/
 │   ├── eda_report.md             # M2 EDA 报告
 │   └── model_report_dt_rf.md     # M3 DT/RF 训练报告
-└── CLAUDE.md                 # 项目入口索引
-├── requirements.txt          # M1 新增 - 依赖锁定
+├── requirements.txt          # M1 新增 - 依赖锁定（注：版本与实际 pip 不一致，见技术栈警告）
 └── CLAUDE.md                 # 项目入口索引
 ```
 
@@ -66,14 +68,16 @@ wg/
 
 | 类别 | 工具/库 | 版本 | 状态 |
 |------|---------|------|------|
-| 编程语言 | Python | 3.10.12 | ✅ 已安装 |
+| 编程语言 | Python | 3.13.5 | ✅ 已安装（conda） |
 | 数据处理 | Pandas | 2.3.3 | ✅ 已安装 |
 | 数值计算 | NumPy | 2.2.6 | ✅ 已安装 |
 | 可视化 | Matplotlib | 3.10.9 | ✅ 已安装 |
-| 深度学习 | PyTorch | 2.11.0 | ✅ 已安装 |
-| 机器学习 | scikit-learn | — | ❌ 待安装 |
-| 统计可视化 | Seaborn | — | ❌ 待安装 |
+| 机器学习 | scikit-learn | ≥1.8 | ✅ 已安装（M3 RF 训练验证） |
+| 统计可视化 | Seaborn | ≥0.13 | ✅ 已安装 |
+| 深度学习 | PyTorch | 2.11.0 | ✅ 已安装（含 torchvision 0.26.0） |
 | 环境管理 | conda (miniconda) | — | ✅ 可用（which 找不到但 conda activate 正常） |
+
+> ⚠️ 依赖版本说明：`requirements.txt` 锁定的版本（如 pandas 3.0.2、torch 2.9.0）与实际 pip 安装版本不一致，原因待查（可能是 M1 锁定后未同步，或环境升级未更新 requirements.txt）。M1-M3 功能在当前实际环境下全部通过，不影响当前进度。
 
 ---
 
@@ -81,8 +85,10 @@ wg/
 
 - **仓库状态**: ✅ 已初始化
 - **当前分支**: main
-- **最近提交**: a8d17e0 — init: 项目初始化 - OpenSpec + 数据集 + 文档体系
+- **最近提交**: f83ca27 — feat(M3): 传统机器学习模型训练完成
+- **提交历史**: a8d17e0 (init) → 2e28300 (M1) → c45b3cc (M2) → f83ca27 (M3)
 - **未提交更改**: 无
+- **OpenSpec 活跃变更**: 无（M1/M2/M3 均已归档至 `openspec/changes/archive/`）
 
 ---
 
@@ -93,10 +99,10 @@ wg/
 | `readme` | 项目说明 | 技术栈、数据集、分工、实验流程 |
 | `dataset/archive.zip` | NSL-KDD 数据集 | 14MB，待解压 |
 | `openspec/config.yaml` | OpenSpec 配置 | schema: spec-driven |
-| `openspec/specs/architecture/spec.md` | 架构决策 | 含 3 条 ADR |
-| `openspec/specs/learned/spec.md` | 学习记忆 | 含 conda 踩坑记录 |
+| `openspec/specs/architecture/spec.md` | 架构决策 | 含 5 条 ADR（A01-A05）|
+| `openspec/specs/learned/spec.md` | 学习记忆 | 含 3 条踩坑档案（conda/WSL/sklearn OMP）|
 | `openspec/specs/references/spec.md` | 外部参考 | 依赖表 + 学术资源 |
-| `openspec/specs/optimization/spec.md` | 优化记录 | 3 条待处理优化 |
+| `openspec/specs/optimization/spec.md` | 优化记录 | 6 条优化点（含 M3 新增 O-DT-01 / O-RF-01 / O-WSL-01）|
 
 ---
 
@@ -110,7 +116,7 @@ wg/
 | 特征数 | 41 |
 | 任务类型 | 二分类（normal/anomaly）+ 多分类（23 种攻击类型） |
 | 攻击大类 | DoS、Probe、R2L、U2R |
-| 文件位置 | dataset/archive.zip（待解压） |
+| 文件位置 | dataset/KDDTrain+.txt + KDDTest+.txt（M1 任务 1.1 已解压）|
 
 ---
 
