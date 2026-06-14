@@ -1,6 +1,6 @@
 # Learned Spec
 
-> Version: 1.1.0 | Last Updated: 2026-06-14（M3 训练补全）
+> Version: 1.2.0 | Last Updated: 2026-06-14（M4 训练补全，新增踩坑-004/005/006）
 
 ## Purpose
 
@@ -74,6 +74,50 @@
   - sklearn 模型函数的 `n_jobs` 默认值应为 1，让生产脚本显式 opt-in 多进程
 - **结论**: 测试环境限制 OMP=1 + n_jobs=1 保证稳定（< 30s 性能损失），生产代码放开
 
+### 踩坑-004: PyTorch + WSL 触发连接断开（M4 新增）
+
+- **症状**: 运行 pytest + PyTorch 测试时 WSL 断开，或 train_m4.py 长时间无输出后断连
+- **根因**（双层）:
+  1. `torch.set_num_threads` 默认 = `os.cpu_count()`（WSL2 = 32 核 = 32 线程）
+  2. CUDA 初始化在 WSL2 占用 300-500MB 显存 + 触发 NVIDIA 驱动调用，对小数据完全无必要反而 OOM
+- **解决方案**: 三层防御：
+  1. `tests/conftest.py` 强制 `torch.set_num_threads(1)` + `torch.set_num_interop_threads(1)` + `CUDA_VISIBLE_DEVICES=""`（测试禁用 GPU）
+  2. `scripts/train_m4.py` 启动时 `N_THREADS = min(4, cpu_count // 8)` 智能公式（生产放开）
+  3. 模型 `predict` 方法内部 `device = next(self.parameters()).device` + `.to(device)`（避免 device mismatch）
+- **预防措施**:
+  - 任何 PyTorch 项目测试 conftest 必须含 torch 三层防御
+  - 模型 predict/proba 必须处理 device（CUDA vs CPU），否则 `model.predict(X_test)` 报 `RuntimeError: mat1 on cpu, different from other tensors on cuda:0`
+- **结论**: PyTorch + WSL 必须三防：conftest 三件套 + 生产智能公式 + 模型 device-aware
+
+### 踩坑-005: Python stdout 缓冲导致后台任务无输出（M4 新增）
+
+- **症状**: 用 `nohup python script.py &` 或 Bash run_in_background 启动训练，日志文件长时间为空，但 CPU 99% 说明在跑
+- **根因**: Python 默认 stdout 是行缓冲（连接到 tty 时）或块缓冲（连接到 pipe/文件时）。`tee` 创建 pipe → Python 切到块缓冲 → print() 输出累积在内核缓冲区，文件不刷新
+- **解决方案**: 用 `python -u` 启动（unbuffered）→ 强制无缓冲 → print 立即写入
+- **预防措施**:
+  - 所有 ML 训练脚本启动时用 `python -u`（或设 `PYTHONUNBUFFERED=1`）
+  - 或在脚本里 `sys.stdout.reconfigure(line_buffering=True)`（Python 3.7+）
+  - 长时间训练任务必须先验证 `tail -f log` 能看到输出
+- **结论**: 后台训练必须用 `python -u`，否则误判"卡死"会 kill 掉实际在跑的任务
+
+### 踩坑-006: SMOTE 在 NSL-KDD 多类不适用（M4 验证 + 否定）
+
+- **症状**: SMOTE 后 MLP 多分类 full_accuracy 从 0.10 降到 0.03（-72%）
+- **根因**（多重）:
+  1. SMOTE 合成样本仅在训练集类边界内插值，未泛化到测试分布
+  2. 多数类（DoS/normal）样本充足，SMOTE 后少数类样本数被提升到多数类水平（53k+），模型训练后倾向于预测多数类（class 0 recall 跳到 37%）
+  3. NSL-KDD 多类极不均衡（U2R 仅 52 条），few-shot learning 本身难题，SMOTE 不能根本解决
+  4. SMOTE k_neighbors 受限（NSL-KDD 多个类样本数 < 5），k_neighbors 必须降到 2 才能运行
+- **解决方案**:
+  - **不推荐**用 SMOTE 处理 NSL-KDD 多类问题
+  - 改用 focal loss / class_weight 调优（更鲁棒）
+  - 真正解决 unseen 攻击需 Open-set Recognition / 半监督
+- **预防措施**:
+  - 实施 SMOTE 前先评估目标类样本数 < 10 是否值得做（few-shot 难）
+  - 实施后必须对比 baseline + 副作用记录（不能只看 acc 是否提升）
+  - 论文中诚实记录"我们试了 SMOTE 但失败了"是合规的研究报告
+- **结论**: 任何数据增强/重采样方法实施后必须 baseline 对比，不能假设"对不均衡有效"
+
 ## 技巧模式
 
 ### 模式-001: sklearn 并行度的三层配置
@@ -143,6 +187,154 @@ print(f"CV f1={best_cv_score:.4f}, Test f1={test_metrics['f1']:.4f}")
 - **验证**: WSL 32 核机器运行 `train_m3.py`（30 组合 × 5 折 RF 网格搜索）13.6s 完成，无 WSL 断开
 - **关联**: 踩坑-003
 
+### 模式-005: PyTorch 三层线程防御（M4 新增）
+
+- **技巧名称**: torch.set_num_threads(1) + CUDA_VISIBLE_DEVICES="" + 模型 device-aware
+- **适用场景**: WSL2 上跑 PyTorch + pytest / 长时间训练
+- **使用方法**:
+```python
+# 第一层：tests/conftest.py
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
+import torch
+torch.set_num_threads(1)
+torch.set_num_interop_threads(1)
+
+# 第二层：生产脚本智能公式
+N_THREADS = min(4, max(1, (os.cpu_count() or 1) // 8))
+torch.set_num_threads(N_THREADS)
+
+# 第三层：模型 device-aware
+def predict(self, x):
+    device = next(self.parameters()).device
+    x_t = torch.as_tensor(x, dtype=torch.float32).to(device)
+    return self.forward(x_t)
+```
+- **效果**: WSL2 + PyTorch 100% 稳定（无 OOM / 无 WSL 断开），生产性能保留 ~80%
+
+### 模式-006: python -u 后台训练（避免假"卡死"判断）
+
+- **技巧名称**: `python -u script.py` 启动长时间任务
+- **适用场景**: 任何 > 30s 的 ML 训练 / 评测脚本
+- **使用方法**:
+```bash
+# ❌ 错误：print 输出被缓冲，日志文件长时间为空
+nohup python train.py > log 2>&1 &
+
+# ✅ 正确：unbuffered，print 立即写入
+nohup python -u train.py > log 2>&1 &
+
+# 或设环境变量
+PYTHONUNBUFFERED=1 python train.py
+```
+- **效果**: 日志实时可见，避免误判"卡死"kill 掉在跑的任务
+
+## M1-M4 全局经验总结
+
+> 跨 4 个里程碑提炼的 8 条核心经验，按重要性排序
+
+### 经验 1: 任何 ML 项目测试必须四层防御（WSL/Linux）
+
+- **问题**: pytest + sklearn/PyTorch 触发 WSL 断开（exit 137 OOM）
+- **根本原因**:
+  - 默认 OMP/MKL/OPENBLAS 多线程爆炸
+  - PyTorch 默认 `cpu_count` 线程
+  - CUDA 初始化在 WSL2 不稳定
+  - Python 模型对象驻留 heap 累积
+- **防御方案**（四层，缺一不可）:
+```python
+# tests/conftest.py — 必须四件套
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("MKL_NUM_THREADS", "1")
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
+import torch
+torch.set_num_threads(1)
+torch.set_num_interop_threads(1)
+
+@pytest.fixture(autouse=True)
+def _cleanup():
+    yield
+    gc.collect()
+    torch.cuda.empty_cache()
+```
+- **关联**: 踩坑-003/004、模式-005、ADR-007
+
+### 经验 2: 报告必须诚实记录局限和副作用
+
+- **做法**:
+  - 双数字：CV f1 + Test f1 同时给（避免 GridSearchCV 误导）
+  - 副作用：SMOTE 后 full_acc -72% 也要诚实记录
+  - 局限：CNN/LSTM 略低于 MLP 也要写（不夸大）
+  - 未知：unseen 攻击无法识别也要承认
+- **M3-M4 实践**:
+  - M3 §8: "多分类 acc=0.046 接近随机" + 14 unseen 攻击解释
+  - M4 §8.5: "SMOTE 后 full_acc 从 0.10 降到 0.03" + 副作用分析
+  - M4 §6.3: "tabular CNN 优势不明确" 论文价值论述
+- **关联**: Karpathy Requirements Integrity 原则
+
+### 经验 3: 任何数据增强/重采样必须 baseline 对比
+
+- **反面教材**: SMOTE 在本项目中凭直觉实施，导致 full_acc -72%
+- **正面做法**:
+  1. 实施前：先评估目标类样本数 < 10 是否有意义
+  2. 实施中：保留 baseline 模型作对照
+  3. 实施后：metrics 报告含 baseline vs 处理后两个数字
+  4. 论文中：失败案例也是合规研究成果
+- **关联**: 踩坑-006、O-NN-01
+
+### 经验 4: 模型 predict 必须 device-aware
+
+- **问题**: `model.predict(X_test)` 报 `RuntimeError: mat1 on cpu, different from other tensors on cuda:0`
+- **根因**: 模型在 CUDA，输入在 CPU
+- **方案**:
+```python
+def predict(self, x):
+    self.eval()
+    device = next(self.parameters()).device  # ← 关键
+    x_t = torch.as_tensor(x, dtype=torch.float32).to(device)  # ← 关键
+    with torch.no_grad():
+        return self.forward(x_t).argmax(dim=1).cpu().numpy()
+```
+- **应用**: MLP/CNN/LSTM 三个模型的 predict 方法都已实现 device-aware
+- **关联**: 踩坑-004、ADR-007
+
+### 经验 5: 后台训练必须 `python -u`
+
+- **问题**: `nohup python train.py > log 2>&1 &` 日志文件长时间空，误判"卡死"kill 掉
+- **根因**: stdout 块缓冲（连接 pipe 时）
+- **方案**: `python -u` 或 `PYTHONUNBUFFERED=1` 强制无缓冲
+- **关联**: 踩坑-005、模式-006
+
+### 经验 6: PyTorch 持久化用 state_dict 而非整个 model
+
+- **方案**:
+  - 保存: `torch.save(model.state_dict(), path)`
+  - 加载: `model = ModelClass(**kwargs); model.load_state_dict(torch.load(path))`
+- **优势**:
+  - 体积更小（仅参数，无类路径）
+  - 跨 PyTorch 版本兼容
+  - 避免 pickle 安全风险
+- **关联**: ADR-005（joblib vs pickle）、ADR-006（PyTorch state_dict）
+
+### 经验 7: 智能公式 `min(N, max(1, cpu_count // 8))` 安全并行
+
+- **方案**: 测试 = 1 / 生产 = `min(4, max(1, cpu_count // 8))`
+- **公式解读**:
+  - 32 核 → 4，8 核 → 1，4 核 → max(1, 0) = 1
+  - 硬上限 N（避免 32 核 WSL 资源爆炸）
+- **应用**: M3 `n_jobs` (sklearn) + M4 `torch.set_num_threads` (PyTorch)
+- **关联**: 踩坑-003、模式-004
+
+### 经验 8: tabular 数据首选 MLP，CNN/LSTM 仅作论文扩展
+
+- **结论**（M4 验证）:
+  - MLP f1=0.988 > LSTM f1=0.984 > CNN f1=0.962
+  - tabular 数据无空间/时序结构，CNN/LSTM 优势不明确
+- **做法**:
+  - 论文主线：MLP（强基线 + 可解释）
+  - 论文扩展：CNN/LSTM 简述"扩展性验证"维度
+  - 不夸大 CNN/LSTM 性能
+
 ## 文件速查表
 
 | 文件路径 | 用途 | 关键内容 |
@@ -159,11 +351,18 @@ print(f"CV f1={best_cv_score:.4f}, Test f1={test_metrics['f1']:.4f}")
 | `src/data/persistence.py` | M2 数据持久化 | pickle 序列化（数据/特征） |
 | `src/models/decision_tree.py` | M3 决策树 | DT 基线 + 网格搜索（n_jobs=1） |
 | `src/models/random_forest.py` | M3 随机森林 | RF 基线 + 网格搜索 + 重要度（n_jobs=1） |
-| `src/models/persistence.py` | M3 模型持久化 | joblib 序列化（替代 pickle，numpy 数组效率更高） |
+| `src/models/persistence.py` | M3+M4 模型持久化 | joblib (sklearn) + torch.save (PyTorch) 双后端 |
 | `scripts/train_m3.py` | M3 训练编排 | 端到端训练（n_jobs=4 智能调节） |
-| `tests/conftest.py` | WSL 兼容 | 强制 OMP_NUM_THREADS=1 / MKL=1 / OPENBLAS=1 |
+| `src/models/mlp.py` | M4 MLP | PyTorch MLP：基线/调优/多分类 + 已知类 acc |
+| `src/models/cnn.py` | M4 CNN | 1D CNN（tabular 适配） |
+| `src/models/lstm.py` | M4 LSTM | LSTM（样本当序列） |
+| `src/data/smote.py` | M4 SMOTE | imblearn SMOTE（仅小样本类 + k_neighbors=2） |
+| `scripts/train_m4.py` | M4 训练编排 | 端到端（6 组合 grid + CNN/LSTM/SMOTE） |
+| `tests/conftest.py` | WSL 兼容 | 强制 OMP=1/MKL=1/OPENBLAS=1 + torch 三防 |
 | `outputs/processed/` | M2 输出 | 8 个 .pkl（X_train/test × binary/multi） |
-| `outputs/models/` | M3 输出 | 4 个 .joblib（DT/RF × binary/multi） |
+| `outputs/models/` | M3+M4 输出 | 4 个 .joblib (DT/RF) + 6 个 .pt (MLP/CNN/LSTM) |
 | `outputs/figures/` | M2 可视化 | 8 张 PNG（分布/相关/重要度） |
+| `outputs/metrics_m4.json` | M4 训练指标 | 7 个模型的 acc/f1/auc 等 |
 | `docs/eda_report.md` | M2 EDA 报告 | 数据探索全流程与结论 |
 | `docs/model_report_dt_rf.md` | M3 训练报告 | DT/RF 10 章节，含多分类局限诚实记录 |
+| `docs/model_report_mlp_dl.md` | M4 训练报告 | MLP/CNN/LSTM 13 章节，含 SMOTE 副作用 |

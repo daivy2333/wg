@@ -1,42 +1,13 @@
-# model-persistence Specification
+# model-persistence Specification (M4 Delta)
+
+> Version: 1.1.0 | Created: 2026-06-14（M3 → M4 delta）
+> Modified by: m4-neural-network change
 
 ## Purpose
-TBD - created by archiving change m3-traditional-ml. Update Purpose after archive.
-## Requirements
-### Requirement: joblib 模型持久化
 
-模块 SHALL 提供 joblib save/load 函数（sklearn 官方推荐）。
+扩展模型持久化能力，新增 PyTorch `torch.save` 后端支持，与现有 sklearn joblib 后端共存但职责分明（joblib 负责 sklearn，torch.save 负责 PyTorch，符合 ADR-005 职责分离原则）。
 
-#### Scenario: 保存模型到 joblib（Happy Path）
-
-- **WHEN** 调用 `save_model(model, path)`
-- **THEN** 模型被序列化为 `.joblib` 文件
-
-#### Scenario: 加载模型还原（Happy Path）
-
-- **WHEN** 调用 `load_model(path)`
-- **THEN** 返回原始 sklearn 模型，可直接调用 .predict()
-
-#### Scenario: 文件不存在抛错（Sad Path）
-
-- **WHEN** 调用 `load_model(path)` 且 path 不存在
-- **THEN** 抛出 FileNotFoundError
-
-### Requirement: M3 最佳模型持久化
-
-模块 SHALL 提供 `save_best_models()` 整合函数，保存 DT/RF 二分类+多分类共 4 个模型。
-
-#### Scenario: 4 个模型保存（Happy Path）
-
-- **WHEN** 调用 `save_best_models(dt_bin, rf_bin, dt_multi, rf_multi, output_dir)`
-- **THEN** 保存 4 个 `.joblib` 文件：
-  - `dt_binary_best.joblib` / `rf_binary_best.joblib`
-  - `dt_multiclass_best.joblib` / `rf_multiclass_best.joblib`
-
-#### Scenario: 输出目录自动创建（Edge）
-
-- **WHEN** output_dir 不存在
-- **THEN** 自动创建目录
+## ADDED Requirements
 
 ### Requirement: PyTorch 模型持久化
 
@@ -89,4 +60,3 @@ TBD - created by archiving change m3-traditional-ml. Update Purpose after archiv
 
 - **WHEN** 调用 `save_best_nn_models` 但只有 4 个模型已训练
 - **THEN** 保存已训练的 4 个，跳过未训练的并打印警告日志
-

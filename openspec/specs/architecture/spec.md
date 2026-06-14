@@ -1,6 +1,6 @@
 # Architecture Spec
 
-> Version: 1.1.0 | Last Updated: 2026-06-14（M3 新增 ADR-005）
+> Version: 1.2.0 | Last Updated: 2026-06-14（M4 新增 ADR-006 + ADR-007）
 
 ## Purpose
 
@@ -108,3 +108,73 @@
   - `pickle`（M2 方案）：通用但大 numpy 数组效率低
   - `onnx` 跨框架：模型可移植但需要额外 onnx 依赖，且对 sklearn 转换支持不完整
   - `pmml` 标准格式：标准化导出但生态较弱，本项目不需要跨工具兼容
+
+### ADR-006: PyTorch 模型持久化用 state_dict + 双后端共存
+
+- **决策**:
+  - M4 神经网络模型持久化统一使用 `torch.save(model.state_dict(), path)`，加载时 `load_torch_model(model_class, path, **kwargs)` 还原
+  - `src/models/persistence.py` 同时存在 `save_model/load_model`（joblib 后端，sklearn 用）和 `save_torch_model/load_torch_model`（torch.save 后端，PyTorch 用），调用接口不混用
+  - `save_best_nn_models(output_dir, ...)` 整合函数支持 6-9 个 .pt 文件批量保存（None 表示跳过）
+- **原因**:
+  1. **state_dict 优势**：
+     - 体积更小（仅参数，不绑类）
+     - 不绑定 Python 类路径（避免 pickle 风险）
+     - 跨 PyTorch 版本兼容性更好
+  2. **双后端职责分明**：
+     - joblib 负责 sklearn（DT/RF/M3）
+     - torch.save 负责 PyTorch（MLP/CNN/LSTM/M4）
+     - 调用方按模型类型选对应 API，模块不混用避免依赖冲突
+  3. **批量保存**：
+     - `save_best_nn_models` 接受 6 个可选模型参数
+     - 未训练的模型传 None 自动跳过 + 打印警告（不全失败）
+- **影响**:
+  - `src/models/persistence.py` 扩展（M3 基础上 + M4 函数）
+  - `outputs/models/*.pt` 6 个文件（M4 产出）
+  - 加载示例：
+    ```python
+    from src.models.persistence import load_torch_model
+    from src.models.mlp import MLPClassifier
+    model = load_torch_model(MLPClassifier, "outputs/models/mlp_binary_tuned.pt",
+                              input_dim=20, output_dim=2)
+    preds = model.predict(X_test)
+    ```
+- **替代方案**:
+  - `torch.save(model, path)` 存整个对象：体积大、依赖类路径、跨版本易失败
+  - ONNX 跨框架：可移植但本项目不需要，且 PyTorch → ONNX 转换偶发算子不支持
+  - PyTorch Lightning checkpoint：超框架，超出 M4 范围
+
+### ADR-007: PyTorch + WSL 必须四层防御
+
+- **决策**:
+  - 测试环境（`tests/conftest.py`）强制四层防御：
+    1. `OMP_NUM_THREADS=1` / `MKL_NUM_THREADS=1` / `OPENBLAS_NUM_THREADS=1`（环境变量）
+    2. `torch.set_num_threads(1)` + `torch.set_num_interop_threads(1)`（CPU 线程）
+    3. `CUDA_VISIBLE_DEVICES=""`（测试禁用 GPU）
+    4. autouse fixture 每个测试后 `gc.collect()` + `torch.cuda.empty_cache()`（防内存累积）
+  - 生产脚本（`scripts/train_m4.py`）用智能公式：`N_THREADS = min(4, max(1, cpu_count // 8))`
+  - 模型 `predict` / `predict_proba` 方法内部 `device = next(self.parameters()).device` + `.to(device)`（避免 device mismatch）
+- **原因**:
+  1. **WSL2 内存限制**（通常 8GB），pytest 收集 14 文件 × 130 测试，每次 import 累积（sklearn + torch + imblearn）
+  2. **PyTorch 默认 `torch.set_num_threads = cpu_count`**（WSL2 = 32 核 = 32 线程）
+  3. **CUDA 初始化在 WSL2 不稳定**：占用 300-500MB 显存 + 触发 NVIDIA 驱动调用，对小数据完全无必要反而 OOM
+  4. **Python 模型对象驻留 heap**：每个测试创建新模型，不显式释放 → 内存累积 → exit 137 → WSL 断开
+- **影响**:
+  - `tests/conftest.py` 从 2 层防御（M3 时期）扩到 4 层（M4 时期）
+  - `src/models/mlp.py` / `cnn.py` / `lstm.py` 的 `predict` 方法必须先取 device 再 .to(device)
+  - 生产脚本不再用 -1（隐式多线程）而是智能公式
+  - **性能影响**：测试环境牺牲 < 5s，生产保留 ~80% CPU 利用率
+- **预防措施**:
+  - 任何 PyTorch + WSL 项目测试 conftest 必须含四层防御
+  - 模型 predict/proba 必须处理 device
+  - 长时间训练用 `python -u`（unbuffered）便于实时监控
+  - 全量测试 > 100 个时分批跑（3-4 批次，防累积 OOM）
+- **关联**:
+  - 踩坑-003（pytest + sklearn 触发 WSL 断开 — M3 时期）
+  - 踩坑-004（PyTorch + WSL 三层防御 — M4 初次实施）
+  - 踩坑-005（Python stdout 缓冲 — M4 误判"卡死"）
+  - O-PYTORCH-WSL-01（optimization 记录）
+  - 模式-005（PyTorch 三层线程防御）
+- **替代方案**:
+  - 用 Docker 容器跑测试：环境隔离但学习成本高
+  - pytest-xdist 并行：WSL 下反而加剧资源竞争
+  - 减少测试数量：违反 TDD 完整性原则

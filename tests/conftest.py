@@ -1,22 +1,42 @@
 """pytest 全局配置
 
-修复 WSL/sklearn 并行爆炸问题：
-  - 设置 OMP_NUM_THREADS=1：OpenMP 单线程（sklearn 内部 BLAS）
-  - 设置 MKL_NUM_THREADS=1：Intel MKL 单线程
-  - 设置 OPENBLAS_NUM_THREADS=1：OpenBLAS 单线程
+四层防御（防 WSL 断开/OOM）：
+  1. OMP/MKL/OPENBLAS 线程数 = 1
+  2. torch CPU 线程 = 1 + interop 线程 = 1
+  3. CUDA_VISIBLE_DEVICES=""（测试禁用 GPU）
+  4. autouse fixture：每个测试后强制 gc.collect() + torch.cuda.empty_cache()
 
-原因：
-  WSL2 在多核 + 内存受限环境下，sklearn 的 GridSearchCV / RF 训练
-  会默认用 n_jobs=-1 启动 OMP 并行，导致进程数 = 物理核数（通常 4-16）。
-  每个进程又各自启动 OMP 子线程，组合爆炸（4 进程 × 4 线程 = 16 个 OMP worker），
-  触发 OOM 或 fork 失败，表现为 WSL 连接断开。
-
-  在 test 环境中限制为 1 线程，保证稳定运行。性能上牺牲小（< 1s 差异），
-  但获得 100% 稳定性。生产代码（train_m3.py）仍可放开。
+为什么需要第四层？
+  - WSL2 内存通常 8GB，pytest 收集 14 文件 × 130 测试
+  - PyTorch 即使禁用 CUDA，模型对象仍驻留 heap
+  - 不显式清理 → 内存累积 → OOM → exit 137 → WSL 断开
 """
+import gc
 import os
 
+# 第一层：环境变量（必须在 import 任何 ML 库之前）
 os.environ.setdefault("OMP_NUM_THREADS", "1")
 os.environ.setdefault("MKL_NUM_THREADS", "1")
 os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 os.environ.setdefault("PYTHONHASHSEED", "0")
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
+
+# 第二层：torch CPU 线程
+import torch
+
+torch.set_num_threads(1)
+torch.set_num_interop_threads(1)
+
+
+# 第四层：autouse fixture，每个测试后清理内存
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _cleanup_memory_after_test():
+    """每个测试后强制释放内存（防 WSL OOM 断开）。"""
+    yield
+    # 测试结束后清理
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
