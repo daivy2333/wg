@@ -1,7 +1,7 @@
 # SNAPSHOT.md — 项目状态快照
 
 > Last Updated: 2026-06-14
-> M1 阶段已完成（任务 1.4-1.8 全 ✅）
+> M1 + M2 阶段已完成（M1 任务 1.4-1.8 ✅ / M2 任务 2.1-2.10 ✅）
 
 ---
 
@@ -23,16 +23,28 @@ wg/
 │       └── optimization/     # 优化记录
 ├── src/                      # M1 新增 - 代码骨架
 │   ├── data/
-│   │   ├── loader.py         # KDDTrain+/KDDTest+ 加载
-│   │   └── preprocessor.py   # 编码 + 标准化 + 整合管线
+│   │   ├── loader.py            # M1 KDDTrain+/KDDTest+ 加载
+│   │   ├── preprocessor.py      # M1 编码 + 标准化 + 整合管线
+│   │   ├── outlier.py           # M2 IQR + clip + log1p
+│   │   ├── feature_selector.py  # M2 方差阈值 + RF Top-K
+│   │   └── persistence.py       # M2 pickle 序列化
 │   ├── models/               # M3/M4 占位
 │   ├── evaluation/           # M5 占位
 │   └── utils/                # 通用工具
-├── tests/                    # M1 新增 - pytest 测试
+├── tests/                    # M1+M2 pytest 测试
 │   ├── test_loader.py        # 12 tests
-│   └── test_preprocessor.py  # 17 tests
-├── notebooks/                # M1 新增 - EDA notebook
-├── outputs/                  # 输出目录
+│   ├── test_preprocessor.py  # 17 tests
+│   ├── test_outlier.py       # 11 tests
+│   ├── test_feature_selector.py  # 9 tests
+│   └── test_persistence.py   # 8 tests
+├── notebooks/
+│   └── 01_data_exploration.py   # M2 EDA 脚本（14 场景）
+├── outputs/                  # M2 输出
+│   ├── processed/            # 8 个 .pkl 文件（X/y 二分类+多分类）
+│   └── figures/              # 8 个分析图表 PNG
+├── docs/
+│   └── eda_report.md         # M2 EDA 报告
+└── CLAUDE.md                 # 项目入口索引
 ├── requirements.txt          # M1 新增 - 依赖锁定
 └── CLAUDE.md                 # 项目入口索引
 ```

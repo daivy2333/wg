@@ -71,3 +71,22 @@
 - **原因**: 任务书要求明确分工，便于成果分配
 - **影响**: 代码结构需按职责划分，milestone 设计需体现三人独立工作
 - **替代方案**: 按功能模块分工（不利于成果分配）
+
+### ADR-004: EDA 探索统一使用 .py 脚本而非 .ipynb
+
+- **决策**: NSL-KDD 数据探索脚本采用 `.py` 文件（`notebooks/01_data_exploration.py`），不使用 Jupyter Notebook 格式
+- **原因**:
+  1. **版本控制友好**：`.py` 文件的 diff 清晰可读，便于 git review；`.ipynb` 包含 execution_count + base64 输出图片，diff 噪音大
+  2. **CI/CD 友好**：可直接 `python scripts.py` 集成到自动化流程，无需 jupyter nbconvert 中间步骤
+  3. **静态分析可用**：pyflakes / black / ruff 等工具可直接处理 `.py`，无需 jupyter 插件
+  4. **图表输出明确**：脚本用 `matplotlib.use("Agg")` 后端 + `plt.savefig()` 保存 PNG，避免 nb 内嵌大图
+  5. **教学与维护成本**：三人项目中小组成员不熟悉 jupyter 时，`.py` 可在任何 Python IDE 直接阅读
+- **影响**:
+  - `notebooks/` 目录保留作为 EDA 脚本容器，但内容为 `.py`
+  - EDA 流程可通过 `python notebooks/01_data_exploration.py` 一键重跑
+  - `docs/eda_report.md` 配套引用改为 `.py` 路径
+  - OpenSpec `eda-reporting` spec 的 R11（"可从头运行"）改用 `python` 而非 `jupyter nbconvert` 验证
+- **替代方案**:
+  - Jupyter Notebook（`.ipynb`）：交互式更强，但 diff/版本控制/CI 体验差，已被本项目放弃
+  - Streamlit / Dash 仪表盘：交互可视化更好，但引入 Web 框架，超出 M2 范围
+  - Quarto / R Markdown：多语言支持好，但 Python 生态首选仍是 `.py`
