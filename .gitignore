@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# CodeGraph
+.codegraph/
+
+# Large data (keep zip, ignore extracted if needed)
+# dataset/KDDTrain+.txt
+# dataset/KDDTest+.txt
