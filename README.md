@@ -106,9 +106,6 @@ wg/
 │   ├── run_smote_only.py        # SMOTE 过采样实验
 │   └── evaluate_m5.py           # 全模型对比评估
 │
-├── notebooks/
-│   └── 01_data_exploration.py   # M2 EDA：分布图、相关性、特征分析
-│
 ├── tests/                       # pytest 测试套件（144 个测试）
 │   ├── test_loader.py
 │   ├── test_preprocessor.py
@@ -141,11 +138,14 @@ wg/
 │   ├── model_report_mlp_dl.md   # M4 MLP/DL 训练报告
 │   └── comparison_report.md     # M5 对比分析报告
 │
-└── paper/                       # M6 论文产出
-    ├── refs.bib                 # BibTeX 参考文献
-    ├── chapters/                # 章节 .tex
-    │   └── ch1-intro.tex
-    └── figures -> ../outputs/figures   # 软链到图表目录
+└── paper/                       # M6+M7 论文产出（CJC 模板）
+    ├── cjc-main.tex              # M7 CJC 模板主文件
+    ├── cjc.cls / cjc.bst         # CJC 文档类与参考文献格式
+    ├── cjc-refs.bib              # 参考文献（19 条）
+    ├── chapters/                 # 6 章节 .tex
+    ├── background.tex            # 英文背景介绍
+    ├── appendix.tex              # 附录（超参数/SMOTE/特征排名）
+    └── slides_outline.md         # 答辩 PPT 提纲
 ```
 
 ## 实验复现
@@ -154,11 +154,13 @@ wg/
 
 ### Step 1：数据准备与探索
 
+EDA 脚本已整合到 `scripts/evaluate_m5.py` 的数据加载阶段，预处理数据可直接从 `outputs/processed/` 加载。
+
 ```bash
-python notebooks/01_data_exploration.py
+python scripts/evaluate_m5.py   # 含数据加载 + 全模型评估
 ```
 
-产出：`outputs/figures/01_*.png` 到 `08_*.png`，`outputs/processed/*.pkl`，`docs/eda_report.md`。
+产出：`outputs/figures/01_*.png` 到 `13_*.png`，`outputs/processed/*.pkl`，`docs/eda_report.md`。
 
 ### Step 2：传统机器学习训练（DT、RF）
 
@@ -218,19 +220,17 @@ pytest tests/ -v
 
 ## 论文编译
 
-论文使用 XeLaTeX 编译（支持中文），参考文献使用 BibTeX：
+论文使用 CJC（《计算机学报》）LaTeX 模板，XeLaTeX 编译：
 
 ```bash
 cd paper
-xelatex main.tex
-bibtex main
-xelatex main.tex
-xelatex main.tex
+latexmk -xelatex cjc-main.tex
+# 或 make cjc
 ```
 
-第一次 `xelatex` 生成 `.aux`，`bibtex` 解析 `refs.bib`，后两次 `xelatex` 解决引用与交叉引用。完整流程产出 `main.pdf`。
+`latexmk` 自动处理 xelatex + bibtex 多轮编译，产出 `cjc-main.pdf`。
 
-章节源文件位于 `paper/chapters/`，图表通过 `paper/figures/` 软链到 `outputs/figures/`。
+章节源文件位于 `paper/chapters/`，图表通过 `\graphicspath{{../outputs/figures/}}` 直接引用。
 
 ## 三人分工
 
@@ -238,15 +238,15 @@ xelatex main.tex
 
 | 角色 | 方向 | 主要产出 | 关键文件 |
 |---|---|---|---|
-| **A 同学** | 数据方向 | 数据加载、EDA、预处理、特征选择、异常值处理 | `src/data/`, `notebooks/01_data_exploration.py`, `docs/eda_report.md` |
+| **A 同学** | 数据方向 | 数据加载、EDA、预处理、特征选择、异常值处理 | `src/data/`, `docs/eda_report.md` |
 | **B 同学** | 模型方向（传统 ML） | 决策树、随机森林，网格搜索调优，特征重要度 | `src/models/decision_tree.py`, `src/models/random_forest.py`, `scripts/train_m3.py` |
-| **C 同学** | 对比分析 + 神经网络 | MLP/CNN/LSTM 训练、SMOTE 实验、指标计算、可视化、论文撰写 | `src/models/mlp.py`, `src/models/cnn.py`, `src/models/lstm.py`, `src/evaluation/`, `scripts/train_m4.py`, `scripts/evaluate_m5.py`, `paper/` |
+| **C 同学** | 对比分析 + 神经网络 | MLP/CNN/LSTM 训练、SMOTE 实验、指标计算、可视化、论文撰写 | `src/models/mlp.py`, `src/evaluation/`, `scripts/train_m4.py`, `scripts/evaluate_m5.py`, `paper/` |
 
-M1（loader）、M2（EDA + 特征工程）、M3（DT/RF）、M4（MLP/CNN/LSTM + SMOTE）、M5（全模型对比）、M6（论文写作）六个里程碑串联起来正好覆盖三个角色的完整工作链路，每人独立负责自己的脚本与文档，最终在 M5 阶段汇合进行横向对比。
+M1（loader）、M2（EDA + 特征工程）、M3（DT/RF）、M4（MLP/CNN/LSTM + SMOTE）、M5（全模型对比）、M6（论文写作）、M7（CJC 模板排版）七个里程碑串联起来覆盖三个角色的完整工作链路。
 
 ## 注意事项
 
 - OpenCV 等计算机视觉库**不需要**安装，NSL-KDD 是网络流量表格数据，全部任务用 Pandas/NumPy + scikit-learn + Matplotlib + PyTorch 完成。
 - 测试集含 15 种训练未见攻击（label 23–37），多分类全量准确率上限约 11%，已知类准确率约 12%，这是 NSL-KDD 的固有设计，不是模型缺陷。
 - SMOTE 在本数据集上效果负面（多分类准确率从 10.09% 降到 2.84%），不推荐作为提升手段。
-- 论文参考文献见 `paper/refs.bib`，包含 NSL-KDD 原始论文、scikit-learn、PyTorch、KDD Cup 1999、UNB 数据集地址，以及 3 篇中文参考文献。
+- 论文使用 CJC 模板（`cjc.cls`），参考文献 19 条（9 原有 + 10 新增），编译命令 `latexmk -xelatex cjc-main.tex`。
