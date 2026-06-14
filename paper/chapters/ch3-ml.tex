@@ -90,7 +90,7 @@ f1=0.6882、AUC=0.9150。
 表~\ref{tab:rf-importance} 列出了重要度 Top-10 的特征，
 完整 Top-20 分布如图~\ref{fig:rf-importance} 所示。
 
-\begin{table}[H]
+\begin{table*}[H]
   \centering
   \caption{随机森林特征重要度 Top-10}
   \label{tab:rf-importance}
@@ -110,7 +110,7 @@ f1=0.6882、AUC=0.9150。
     10 & \texttt{serror\_rate}             & 0.038 \\
     \bottomrule
   \end{tabular}
-\end{table}
+\end{table*}
 
 值得注意的是，$\texttt{flag\_SF}$ (TCP 标志位 SYN-FIN 同时置位) 以 14.8\% 的重要度位居首位，
 这一异常标志组合是多种扫描与拒绝服务攻击的典型指纹，
@@ -143,7 +143,7 @@ f1=0.6882、AUC=0.9150。
 
 表~\ref{tab:dt-rf-compare} 给出了 DT 与 RF 在基线和调优后的二分类性能横向对比。
 
-\begin{table}[H]
+\begin{table*}[H]
   \centering
   \caption{决策树与随机森林二分类性能对比}
   \label{tab:dt-rf-compare}
@@ -157,7 +157,7 @@ f1=0.6882、AUC=0.9150。
     RF 调优后       & 0.7234 & 0.9602 & 0.5363 & 0.6882 & 0.9150 \\
     \bottomrule
   \end{tabular}
-\end{table}
+\end{table*}
 
 从对比中可以提炼三条关键观察：
 
