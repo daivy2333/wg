@@ -1,11 +1,8 @@
 # SNAPSHOT.md — 项目状态快照
 
-> Last Updated: 2026-06-14
-> **M1 + M2 + M3 + M4 + M5 + M6 + M7 阶段全部完成** ✅ 🎉
-> - M1 任务 1.1-1.8 ✅ / M2 任务 2.1-2.10 ✅
-> - M3 任务 3.1-3.9 ✅ / M4 任务 4.1-4.8 ✅
-> - M5 任务 5.1-5.7 ✅ / M6 任务 6.1-6.8 ✅
-> - M7 任务 7.1-7.7 ✅（CJC LaTeX 模板排版迁移，XeLaTeX 编译通过）
+> Last Updated: 2026-06-16
+> **M1-M7 全部完成** ✅ 🎉 | **M8 五分类重构已规划**
+> - M8：多分类从 40 类攻击标签改为 5 大类（Normal/DoS/Probe/R2L/U2R），重训模型 + 论文更新
 
 ---
 
@@ -140,8 +137,8 @@ wg/
 
 - **仓库状态**: ✅ 已初始化
 - **当前分支**: main
-- **最近提交**: 1ffee8d — fix(paper): correct multi-class from 23-class to 40-class description
-- **项目状态**: M1-M7 全部完成 ✅（7/7 里程碑），XeLaTeX 编译通过，终稿审核完成
+- **最近提交**: b5e9d8b — feat(paper): add 5-category post-hoc analysis to limitations (ch6)
+- **项目状态**: M1-M7 完成 ✅，M8 五分类重构已规划 🔄
 
 ---
 
