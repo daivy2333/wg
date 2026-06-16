@@ -1,6 +1,6 @@
 # Learned Spec
 
-> Version: 1.5.0 | Last Updated: 2026-06-14（M7 CJC模板完成 + 终稿审核，项目 M1-M7 全部完结）
+> Version: 1.6.0 | Last Updated: 2026-06-16（M8 五分类重构规划，GPU 确认，踩坑 012 + 经验 9）
 
 ## Purpose
 
@@ -397,7 +397,18 @@ def predict(self, x):
 | `paper/cjc-refs.bib` | M7 CJC 格式参考文献 | 19条（新增长篇引用 10 条），volume/number字段已适配 |
 | `paper/background.tex` | M7 英文背景 | ~400词，background 环境 |
 | `paper/appendix.tex` | M7 附录 | 3节：超参数表 + SMOTE对比 + Top-20特征，引用已硬编码 |
-| `README.md` | 项目指南 | 252行，5步复现流程 |
+| `outputs/label_id_to_category.json` | 标签映射 | 40→5 大类别映射（Normal/DoS/Probe/R2L/U2R） |
+| `outputs/label_id_to_name.json` | 标签名 | 40 个攻击标签 ID → 名称映射 |
+| `README.md` | 项目指南 | 完整复现流程 |
+
+## 环境信息
+
+| 属性 | 值 |
+|------|-----|
+| Python | 3.13.5（conda，路径 `/home/daivy/miniconda3/bin/python`） |
+| GPU | NVIDIA GeForce RTX 4060 Laptop GPU（CUDA 可用，8GB VRAM） |
+| PyTorch | 2.9.0+cu128 |
+| LaTeX | TeX Live 2025（Windows，`latexmk -xelatex`） |
 
 ## 踩坑档案
 
@@ -442,3 +453,27 @@ def predict(self, x):
 - **结论**: 编码**完全一致**，低准确率是 NSL-KDD 数据集固有特性（15 类未见攻击 + 极端类不平衡），非代码缺陷
 - **预防**: 多分类任务中验证标签编码一致性：`set(y_train.unique()) == set(y_test.unique()) & set(y_train.unique())`
 - **关联**: 终稿审核
+
+<!-- 踩坑-012 -->
+### 踩坑-012: 40 类预测后处理映射为 5 类无法提升指标
+
+- **症状**: DT/RF 5 分类准确率分别仅 6.69% 和 6.64%，相比 40 分类（4.56%/4.64%）提升不足 3pp
+- **根因**: 模型按 40 个具体攻击类型训练，错误模式集中在同类攻击之间（如 neptune→smurf），后处理映射无法纠正类内混淆；跨大类混淆极少发生，映射无纠正空间
+- **解决**: 要实现有意义的多分类，需在**训练阶段**即使用 5 类标签训练模型，后处理映射不奏效
+- **预防**: 粗粒度分类指标提升 ≠ 后处理可达。模型决策边界决定上限，标签映射不改变决策边界
+- **关联**: M7 终稿审核、M8 五分类重构
+
+### 经验 9: 40 类细粒度 vs 5 类粗粒度多分类的实验决策
+
+- **背景**（M7 终稿审核发现）:
+  - 原实现：40 类细粒度攻击标签分类，准确率仅 4.6-10%
+  - 5 类粗粒度（Normal/DoS/Probe/R2L/U2R）更符合安全运维需求，且文献常用
+- **决策**（M8）:
+  - 废弃 40 类方案，全部改为 5 类分类
+  - 重新生成 5 类标签 → 重训 DT/RF/MLP/CNN/LSTM → 更新论文全章
+  - 5 类随机基线 1/5=20%，预期准确率 70-90%
+  - 消除 unseen 攻击问题（5 类全覆盖），论文分析聚焦类不平衡
+- **教训**:
+  - 实验设计阶段应优先选择与论文叙事一致的分类粒度
+  - 发现问题早于论文定稿更好——M7 已发现但先存档了 40 类分析，M8 才切换
+  - 5 类后处理验证是低成本的决策依据：跑一次就知道改标签能不能救，不用猜
