@@ -61,7 +61,7 @@ FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 MODEL_CONFIGS: dict[str, tuple] = {
     "mlp_binary_best.pt":      (MLPClassifier, {"input_dim": 20, "output_dim": 2}),
     "mlp_binary_tuned.pt":     (MLPClassifier, {"input_dim": 20, "output_dim": 2, "hidden_dims": (256, 128, 64), "dropout": 0.3}),
-    "mlp_multiclass_best.pt":  (MLPClassifier, {"input_dim": 20, "output_dim": 5, "hidden_dims": (128, 128)}),
+    "mlp_multiclass_best.pt":  (MLPClassifier, {"input_dim": 53, "output_dim": 5, "hidden_dims": (128, 64)}),
     "cnn_binary_best.pt":      (CNN1DClassifier, {"input_length": 20, "output_dim": 2}),
     "lstm_binary_best.pt":     (LSTMClassifier, {"input_size": 20, "output_dim": 2}),
 }
