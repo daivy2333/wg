@@ -166,6 +166,52 @@
 
 ---
 
+## M8: 五分类重构（C同学主导）
+
+> 目标：将多分类任务从 40 类攻击标签改为 5 大类（Normal/DoS/Probe/R2L/U2R），重训模型，更新论文
+> GPU: RTX 4060 Laptop（CUDA 可用，CNN/LSTM 训练可行）
+
+### 8.1 代码修改
+
+| # | 任务 | 优先级 | 验收标准 | 状态 |
+|---|------|--------|----------|------|
+| 8.1.1 | `make_labels()` 新增 `task="multiclass_5cat"`，利用 `label_id_to_category.json` 生成 5 类标签 | 高 | 训练集 5 类（0-4），测试集 5 类 | 待开始 |
+| 8.1.2 | `preprocess_pipeline()` 支持 `task="multiclass_5cat"` | 高 | `y_train_5cat.pkl` / `y_test_5cat.pkl` 生成 | 待开始 |
+| 8.1.3 | 模型训练脚本适配 `output_dim=5`（DT/RF 默认多类，MLP/CNN/LSTM 的 `output_dim` 参数改为 5） | 高 | 所有模型可正常训练 5 类 | 待开始 |
+| 8.1.4 | 评估脚本 `evaluate_m5.py` 适配 5 类指标（移除 `unseen_ids`，简化 `known_class_accuracy`） | 高 | `metrics_m5.json` 含 5 类指标 | 待开始 |
+| 8.1.5 | 测试文件更新：修改 `test_decision_tree.py`、`test_random_forest.py`、`test_mlp.py` 中的 `output_dim` 断言 | 中 | pytest 全部通过 | 待开始 |
+
+### 8.2 重训模型（GPU 加速）
+
+| # | 任务 | 优先级 | 验收标准 | 状态 |
+|---|------|--------|----------|------|
+| 8.2.1 | 重新运行数据预处理，生成 5 类标签 pickle 文件 | 高 | `y_train_multi.pkl` / `y_test_multi.pkl` 包含 0-4 整数标签 | 待开始 |
+| 8.2.2 | 重训 DT/RF 多分类模型（`scripts/train_m3.py`） | 高 | `dt_multiclass_best.joblib` / `rf_multiclass_best.joblib` 更新 | 待开始 |
+| 8.2.3 | 重训 MLP 多分类模型（基线+调优），移除 SMOTE 版本 | 高 | `mlp_multiclass_best.pt` 更新 | 待开始 |
+| 8.2.4 | CNN/LSTM 5 分类训练（RTX 4060 GPU） | 中 | `cnn_multiclass_best.pt` / `lstm_multiclass_best.pt` | 待开始 |
+| 8.2.5 | 重跑 M5 评估对比，产出新的 `metrics_m5.json` 和混淆矩阵（5×5）| 高 | 5 类对比表、per-class F1 柱状图 | 待开始 |
+
+### 8.3 论文更新
+
+| # | 任务 | 优先级 | 验收标准 | 状态 |
+|---|------|--------|----------|------|
+| 8.3.1 | ch1：删除"40 种攻击标签"描述，改为"5 大攻击类别"；调整未见攻击讨论 | 高 | ch1 与实验一致 | 待开始 |
+| 8.3.2 | ch3：多分类实验改为 5 类，更新准确率、随机基线 1/5=20% | 高 | 数据与重训结果一致 | 待开始 |
+| 8.3.3 | ch4：MLP 多分类改为 5 类，删除 SMOTE，调整 unseen 攻击讨论 | 高 | 与 5 类实验一致 | 待开始 |
+| 8.3.4 | ch5：5 分类对比分析，per-class F1 按 5 大类分析 | 高 | 新对比表 + 新结论 | 待开始 |
+| 8.3.5 | ch6：更新局限性（5 分类消除 unseen 问题），删除后处理声明，更新未来工作 | 中 | 与全文一致 | 待开始 |
+| 8.3.6 | appendix：更新超参数表，SMOTE 对比改为可选附录 | 低 | 附录与正文一致 | 待开始 |
+
+### 8.4 文档
+
+| # | 任务 | 优先级 | 验收标准 | 状态 |
+|---|------|--------|----------|------|
+| 8.4.1 | 更新 README.md 实验指标 | 中 | 指标与重训结果一致 | 待开始 |
+| 8.4.2 | 更新 SNAPSHOT.md | 中 | 反映 M8 完成状态 | 待开始 |
+| 8.4.3 | OpenSpec 归档 M8 变更 | 低 | `openspec/changes/archive/` | 待开始 |
+
+---
+
 ## 依赖关系图
 
 ```
