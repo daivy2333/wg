@@ -52,14 +52,12 @@ MLP（调优）   & hidden\_layers      & (256, 128, 64)     \\
               & activation          & relu               \\
               & dropout             & 0.3                \\
 \midrule
-CNN           & conv1d\_layer\_1    & filters=32, kernel=3 \\
-              & conv1d\_layer\_2    & filters=64, kernel=3 \\
-              & fc\_layer\_1        & 128                \\
-              & fc\_layer\_2        & 1                  \\
+CNN           & conv1d\_layer       & filters=16, kernel=3              \\
+              & pooling             & MaxPool1d(2)                      \\
+              & fc\_layer            & Linear(160→2)                     \\
 \midrule
-LSTM          & lstm\_units         & 64                 \\
-              & fc\_layer\_1        & 32                 \\
-              & fc\_layer\_2        & 1                  \\
+LSTM          & hidden\_size         & 32                                \\
+              & fc\_layer            & Linear(32→2)                      \\
 \bottomrule
 \end{tabular}
 \end{table}
