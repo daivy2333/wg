@@ -218,32 +218,6 @@ pytest tests/ -v
 
 更多细节见 `docs/comparison_report.md`。
 
-## 论文编译
-
-论文使用 CJC（《计算机学报》）LaTeX 模板，XeLaTeX 编译：
-
-```bash
-cd paper
-latexmk -xelatex cjc-main.tex
-# 或 make cjc
-```
-
-`latexmk` 自动处理 xelatex + bibtex 多轮编译，产出 `cjc-main.pdf`。
-
-章节源文件位于 `paper/chapters/`，图表通过 `\graphicspath{{../outputs/figures/}}` 直接引用。
-
-## 三人分工
-
-本项目按 M1–M6 里程碑推进，对应数据、模型、对比分析三条主线，便于分工分配：
-
-| 角色 | 方向 | 主要产出 | 关键文件 |
-|---|---|---|---|
-| **A 同学** | 数据方向 | 数据加载、EDA、预处理、特征选择、异常值处理 | `src/data/`, `docs/eda_report.md` |
-| **B 同学** | 模型方向（传统 ML） | 决策树、随机森林，网格搜索调优，特征重要度 | `src/models/decision_tree.py`, `src/models/random_forest.py`, `scripts/train_m3.py` |
-| **C 同学** | 对比分析 + 神经网络 | MLP/CNN/LSTM 训练、SMOTE 实验、指标计算、可视化、论文撰写 | `src/models/mlp.py`, `src/evaluation/`, `scripts/train_m4.py`, `scripts/evaluate_m5.py`, `paper/` |
-
-M1（loader）、M2（EDA + 特征工程）、M3（DT/RF）、M4（MLP/CNN/LSTM + SMOTE）、M5（全模型对比）、M6（论文写作）、M7（CJC 模板排版）七个里程碑串联起来覆盖三个角色的完整工作链路。
-
 ## 注意事项
 
 - OpenCV 等计算机视觉库**不需要**安装，NSL-KDD 是网络流量表格数据，全部任务用 Pandas/NumPy + scikit-learn + Matplotlib + PyTorch 完成。

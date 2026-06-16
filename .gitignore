@@ -39,3 +39,5 @@ paper/*.fdb_latexmk
 
 # CJC template upstream (separate repo, copied .cls/.bst as needed)
 paper/latex-/
+
+/dataset/
