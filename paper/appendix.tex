@@ -5,7 +5,7 @@
 
 表6列出了决策树、随机森林和MLP在5大类多分类任务上的测试集准确率及各类别F1值。所有模型均使用相同的5类标签（DoS/Normal/Probe/R2L/U2R）进行训练与评估。
 
-\begin{table}[htbp]
+\begin{table*}[htbp]
 \centering
 \caption{五分类模型详细指标对比}
 \label{tab:multiclass-detail}
@@ -19,7 +19,7 @@ RF  & 0.737 & 0.88 & 0.81 & 0.73 & 0.23 & 0.06 \\
 MLP & 0.810 & 0.88 & 0.82 & 0.75 & 0.57 & 0.56 \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 R2L和U2R类别因训练样本极度稀缺（分别仅995条和52条），F1值显著低于DoS、Normal和Probe。MLP在R2L（0.57）和U2R（0.56）上的F1明显优于树模型（R2L 0.23-0.26，U2R 0.06-0.08），展现了神经网络在特征交互学习上的优势。然而，U2R类对所有模型而言仍然是极大的挑战。
 
