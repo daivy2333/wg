@@ -90,6 +90,23 @@ f1=0.6882、AUC=0.9150。
   \centering
   \caption{随机森林特征重要度 Top-10}
   \label{tab:rf-importance}
+  \small
+  \begin{tabular}{clc}
+    \toprule
+    排名 & 特征名 & 重要度 \\
+    \midrule
+    1 & flag\_SF                & 0.1479 \\
+    2 & src\_bytes              & 0.0924 \\
+    3 & dst\_bytes              & 0.0786 \\
+    4 & same\_srv\_rate         & 0.0651 \\
+    5 & dst\_host\_srv\_count   & 0.0587 \\
+    6 & dst\_host\_same\_srv\_rate & 0.0523 \\
+    7 & count                   & 0.0481 \\
+    8 & service                 & 0.0442 \\
+    9 & dst\_host\_count         & 0.0398 \\
+    10 & protocol\_type          & 0.0356 \\
+    \bottomrule
+  \end{tabular}
 \end{table}
 
 \begin{figure*}[t]
