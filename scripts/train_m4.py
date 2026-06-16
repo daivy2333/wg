@@ -94,7 +94,7 @@ def train_val_split(
 
 
 def multiclass_metrics_with_known_class(
-    model, X_test: np.ndarray, y_test: np.ndarray, num_classes: int = 23
+    model, X_test: np.ndarray, y_test: np.ndarray, num_classes: int = 5
 ) -> dict:
     """多分类全量 + 已知类 acc 双数字。
 
@@ -209,10 +209,10 @@ def main(epochs: int = 50, do_tune: bool = True, do_smote: bool = True, output_d
     t0 = time.time()
     result_mlp_multi = train_mlp_multiclass(
         X_tr, y_tr_multi, X_val, y_val_multi,
-        num_classes=23, epochs=epochs, verbose=False,
+        num_classes=5, epochs=epochs, verbose=False,
     )
     multi_metrics = multiclass_metrics_with_known_class(
-        result_mlp_multi.model, X_test, y_test_multi, num_classes=23
+        result_mlp_multi.model, X_test, y_test_multi, num_classes=5
     )
     metrics_all["mlp_multiclass"] = {**result_mlp_multi.val_metrics, **multi_metrics}
     print(f"  full_accuracy: {multi_metrics['full_accuracy']:.4f}")
@@ -262,20 +262,20 @@ def main(epochs: int = 50, do_tune: bool = True, do_smote: bool = True, output_d
                 print(f"  SMOTE 后样本: {X_smote.shape[0]}（原 {X_tr.shape[0]}）")
                 result_mlp_smote = train_mlp_multiclass(
                     X_smote, y_smote, X_val, y_val_multi,
-                    num_classes=23, epochs=epochs, verbose=False,
+                    num_classes=5, epochs=epochs, verbose=False,
                 )
                 smote_metrics = multiclass_metrics_with_known_class(
-                    result_mlp_smote.model, X_test, y_test_multi, num_classes=23
+                    result_mlp_smote.model, X_test, y_test_multi, num_classes=5
                 )
                 # 提取目标类的 recall
                 from sklearn.metrics import recall_score
                 preds_smote = result_mlp_smote.model.predict(X_test)
                 per_class_recall = recall_score(
                     y_test_multi, preds_smote, average=None,
-                    labels=list(range(23)), zero_division=0
+                    labels=list(range(5)), zero_division=0
                 )
                 smote_metrics["per_class_recall"] = {
-                    int(i): float(per_class_recall[i]) for i in range(23)
+                    int(i): float(per_class_recall[i]) for i in range(5)
                 }
                 smote_metrics["minority_classes"] = minority_ids
                 smote_metrics["skipped_classes"] = skipped_ids

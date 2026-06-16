@@ -53,10 +53,10 @@ def test_load_torch_model_architecture_mismatch(tmp_models_dir):
     """架构不匹配抛 RuntimeError。"""
     model = MLPClassifier(input_dim=20, output_dim=2)
     save_torch_model(model, tmp_models_dir / "mismatch.pt")
-    # 尝试用 output_dim=23 加载（输出维度不匹配）
+    # 尝试用 output_dim=5 加载（输出维度不匹配）
     with pytest.raises(RuntimeError, match="加载 state_dict 失败"):
         load_torch_model(
-            MLPClassifier, tmp_models_dir / "mismatch.pt", input_dim=20, output_dim=23
+            MLPClassifier, tmp_models_dir / "mismatch.pt", input_dim=20, output_dim=5
         )
 
 

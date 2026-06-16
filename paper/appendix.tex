@@ -1,9 +1,31 @@
 % appendix.tex -- 附录（CJC 模板 \input{appendix} 加载）
 % 仅包含 \section{} 块，不含文档类与导言
 
+\section{五分类各模型详细指标}
+
+表6列出了决策树、随机森林和MLP在5大类多分类任务上的测试集准确率及各类别F1值。所有模型均使用相同的5类标签（DoS/Normal/Probe/R2L/U2R）进行训练与评估。
+
+\begin{table*}[htbp]
+\centering
+\caption{五分类模型详细指标对比}
+\label{tab:multiclass-detail}
+\small
+\begin{tabular}{lcccccc}
+\toprule
+模型 & Accuracy & DoS F1 & Normal F1 & Probe F1 & R2L F1 & U2R F1 \\
+\midrule
+DT  & 0.743 & 0.89 & 0.82 & 0.74 & 0.26 & 0.08 \\
+RF  & 0.737 & 0.88 & 0.81 & 0.73 & 0.23 & 0.06 \\
+MLP & 0.810 & 0.88 & 0.82 & 0.75 & 0.57 & 0.56 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+R2L和U2R类别因训练样本极度稀缺（分别仅995条和52条），F1值显著低于DoS、Normal和Probe。MLP在R2L（0.57）和U2R（0.56）上的F1明显优于树模型（R2L 0.23-0.26，U2R 0.06-0.08），展现了神经网络在特征交互学习上的优势。然而，U2R类对所有模型而言仍然是极大的挑战。
+
 \section{模型超参数完整列表}
 
-本文实验共涉及10个模型，涵盖传统机器学习与深度学习方法。表6列出6组核心配置的关键超参数，其余4个模型（$K$近邻、朴素贝叶斯、逻辑回归、支持向量机）采用scikit-learn库默认参数，不再单独列出。所有神经网络模型的优化器统一为Adam，批次大小为256，训练轮数上限为50，并启用早停机制（patience=5）。
+本文实验共涉及10个模型，涵盖传统机器学习与深度学习方法。表7列出6组核心配置的关键超参数，其余4个模型（$K$近邻、朴素贝叶斯、逻辑回归、支持向量机）采用scikit-learn库默认参数，不再单独列出。所有神经网络模型的优化器统一为Adam，批次大小为256，训练轮数上限为50，并启用早停机制（patience=5）。
 
 \begin{table}[htbp]
 \centering
@@ -30,46 +52,15 @@ MLP（调优）   & hidden\_layers      & (256, 128, 64)     \\
               & activation          & relu               \\
               & dropout             & 0.3                \\
 \midrule
-CNN           & conv1d\_layer\_1    & filters=32, kernel=3 \\
-              & conv1d\_layer\_2    & filters=64, kernel=3 \\
-              & fc\_layer\_1        & 128                \\
-              & fc\_layer\_2        & 1                  \\
+CNN           & conv1d\_layer       & filters=16, kernel=3              \\
+              & pooling             & MaxPool1d(2)                      \\
+              & fc\_layer            & Linear(160→2)                     \\
 \midrule
-LSTM          & lstm\_units         & 64                 \\
-              & fc\_layer\_1        & 32                 \\
-              & fc\_layer\_2        & 1                  \\
+LSTM          & hidden\_size         & 32                                \\
+              & fc\_layer            & Linear(32→2)                      \\
 \bottomrule
 \end{tabular}
 \end{table}
-
-\section{SMOTE过采样详细实验结果}
-
-为缓解多分类任务中类别严重不平衡（尤其是U2R和R2L两个极稀有类在训练集中合计不足200条样本）对模型性能的干扰，本文在多分类实验流程中额外引入SMOTE（Synthetic Minority Over-sampling Technique）对训练集进行过采样，将所有非多数类样本数提升至与多数类对齐的水平。表7对比了SMOTE应用前后随机森林模型在多分类测试集上的性能变化。
-
-\begin{table}[htbp]
-\centering
-\caption{SMOTE过采样前后多分类性能对比}
-\label{tab:smote}
-\small
-\begin{tabular}{lcc}
-\toprule
-指标           & SMOTE前 & SMOTE后 \\
-\midrule
-full\_accuracy & 0.101   & 0.028   \\
-f1\_macro      & 0.015   & 0.008   \\
-\midrule
-变化幅度       & 基准    & full\_acc 下降 72.3\% \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-实验结果与预期相反，SMOTE过采样在NSL-KDD多分类任务中产生了显著的负向影响：整体准确率从0.101下降至0.028，降幅达72.3\%；宏平均F1值由0.015降至0.008，进一步降低约46.7\%。逐类分析显示，U2R和R2L两个稀有类别的召回率与F1值在SMOTE后均出现明显退化，反而是Normal、DoS等原本已占据主导地位的多数类正确率同步下滑。这一现象可归因于两点：
-
-（1）少数类（U2R、R2L）原始样本极少，SMOTE在其特征邻域内合成的样本容易跨越真实的类边界，引入大量噪声，干扰分类面的建立；
-
-（2）过采样后多数类（Normal、DoS）样本量被压缩至与少数类对齐，模型对大类流量模式的拟合能力被削弱，反而丧失了原本的判别优势。
-
-基于上述负面结果，本文的最终实验方案未采用SMOTE预处理，所有报告的多分类指标均建立在原始不平衡训练集之上，以保留模型在真实数据分布下的学习表现。
 
 \section{随机森林特征重要度完整排名 (Top-20)}
 

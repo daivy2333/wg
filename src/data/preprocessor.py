@@ -6,6 +6,8 @@
 - 数据集划分：保留 KDDTrain+/KDDTest+ 原始划分
 - 难度列：丢弃
 """
+import json
+from pathlib import Path
 from typing import Literal, Optional
 
 import numpy as np
@@ -13,6 +15,21 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 from .loader import COLUMN_NAMES, FEATURE_NAMES
+
+
+# 5 类标签映射固定顺序（与 label_id_to_category.json 的值一致）
+FIVE_CATEGORIES = ["DoS", "Normal", "Probe", "R2L", "U2R"]
+
+# 40→5 映射表路径
+_DATA_DIR = Path(__file__).resolve().parents[2] / "outputs"
+
+
+def _load_name_to_category() -> dict[str, str]:
+    with open(_DATA_DIR / "label_id_to_name.json") as f:
+        names = json.load(f)
+    with open(_DATA_DIR / "label_id_to_category.json") as f:
+        cats = json.load(f)
+    return {v: cats[k] for k, v in names.items() if k in cats}
 
 
 # 数值特征列（41 特征中除去 3 个分类列）
@@ -119,30 +136,42 @@ def standardize(
 
 def make_labels(
     labels: pd.Series,
-    task: Literal["binary", "multiclass"] = "binary",
+    task: Literal["binary", "multiclass", "multiclass_5cat"] = "binary",
 ) -> pd.Series:
-    """生成二分类或多分类标签。
+    """生成二分类、40类多分类或5大类标签。
 
     Args:
         labels: 原始 label 列（string 类型：normal / 各种攻击名）
         task: 'binary' → 0=normal, 1=anomaly
-              'multiclass' → 0..N-1（LabelEncoder 整数映射）
+              'multiclass' → 0..N-1（LabelEncoder 整数映射，~40类）
+              'multiclass_5cat' → 0..4（5大类：DoS/Normal/Probe/R2L/U2R）
 
     Returns:
         整数标签 Series
     """
     if task == "binary":
         return (labels != "normal").astype(np.int8)
-    elif task == "multiclass":
+    elif task in ("multiclass", "multiclass_5cat"):
         le = LabelEncoder()
-        return pd.Series(le.fit_transform(labels), index=labels.index, dtype=np.int32)
+        encoded = pd.Series(le.fit_transform(labels), index=labels.index, dtype=np.int32)
+        if task == "multiclass_5cat":
+            name2cat = _load_name_to_category()
+            cat_to_idx = {cat: i for i, cat in enumerate(FIVE_CATEGORIES)}
+            encoded = pd.Series(
+                [cat_to_idx[name2cat[name]] for name in labels],
+                index=labels.index,
+                dtype=np.int32,
+            )
+        return encoded
     else:
-        raise ValueError(f"未知 task: {task!r}（仅支持 'binary' 或 'multiclass'）")
+        raise ValueError(
+            f"未知 task: {task!r}（仅支持 'binary' / 'multiclass' / 'multiclass_5cat'）"
+        )
 
 
 def preprocess_pipeline(
     df: pd.DataFrame,
-    task: Literal["binary", "multiclass"] = "binary",
+    task: Literal["binary", "multiclass", "multiclass_5cat"] = "binary",
     service_le: Optional[LabelEncoder] = None,
     scaler: Optional[StandardScaler] = None,
     fit: bool = True,

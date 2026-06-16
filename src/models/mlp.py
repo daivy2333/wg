@@ -343,7 +343,7 @@ def train_mlp_multiclass(
     X_val: np.ndarray | pd.DataFrame,
     y_val: np.ndarray | pd.Series,
     *,
-    num_classes: int = 23,
+    num_classes: int = 5,
     hidden_dims: tuple[int, ...] = (128, 128),
     dropout: float = 0.3,
     class_weight: str | dict[int, float] | None = "balanced",

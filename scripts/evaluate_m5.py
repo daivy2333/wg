@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""M5 对比分析编排脚本 — 统一测试集评估 10 个模型 + 生成对比图表和报告
+"""M5 对比分析编排脚本 — 统一测试集评估 9 个模型 + 生成对比图表和报告
 
 运行：
     python scripts/evaluate_m5.py
@@ -12,7 +12,7 @@
 输出：
     outputs/metrics_m5.json          — 全量指标
     outputs/figures/09-13_*.png      — 7 张对比图表
-    docs/comparison_report.md        — 9 章对比报告
+    docs/comparison_report.md        — 8 章对比报告
 """
 
 # === WSL thread defense ===
@@ -61,8 +61,7 @@ FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 MODEL_CONFIGS: dict[str, tuple] = {
     "mlp_binary_best.pt":      (MLPClassifier, {"input_dim": 20, "output_dim": 2}),
     "mlp_binary_tuned.pt":     (MLPClassifier, {"input_dim": 20, "output_dim": 2, "hidden_dims": (256, 128, 64), "dropout": 0.3}),
-    "mlp_multiclass_best.pt":  (MLPClassifier, {"input_dim": 20, "output_dim": 23, "hidden_dims": (128, 128)}),
-    "mlp_multiclass_smote.pt": (MLPClassifier, {"input_dim": 20, "output_dim": 23, "hidden_dims": (128, 128)}),
+    "mlp_multiclass_best.pt":  (MLPClassifier, {"input_dim": 20, "output_dim": 5, "hidden_dims": (128, 128)}),
     "cnn_binary_best.pt":      (CNN1DClassifier, {"input_length": 20, "output_dim": 2}),
     "lstm_binary_best.pt":     (LSTMClassifier, {"input_size": 20, "output_dim": 2}),
 }
@@ -138,23 +137,15 @@ def compute_binary_metrics(
 def compute_multiclass_metrics(
     y_true: np.ndarray,
     y_pred: np.ndarray,
-    unseen_ids: tuple[int, ...] = (),
 ) -> dict[str, float]:
-    """多分类指标（含已知类准确率）。"""
+    """多分类指标（5 大类）。"""
     full_acc = float(accuracy_score(y_true, y_pred))
     f1_m = float(f1_score(y_true, y_pred, average="macro", zero_division=0))
-
-    if unseen_ids:
-        mask = ~np.isin(y_true, list(unseen_ids))
-        known_acc = float(accuracy_score(y_true[mask], y_pred[mask])) if mask.sum() > 0 else full_acc
-    else:
-        known_acc = full_acc
 
     return {
         "accuracy": full_acc,
         "f1_macro": f1_m,
         "full_accuracy": full_acc,
-        "known_class_accuracy": known_acc,
     }
 
 
@@ -194,7 +185,7 @@ def derive_label_mapping() -> tuple[dict, dict]:
 # ============================================================
 
 def load_all_models() -> dict:
-    """加载全部 10 个模型（4 sklearn + 6 PyTorch）。"""
+    """加载全部 9 个模型（4 sklearn + 5 PyTorch）。"""
     models: dict = {}
 
     # —— sklearn 模型（M3）——
@@ -247,6 +238,30 @@ def _save_confusion_matrix(cm: np.ndarray, title: str, save_path: Path) -> None:
     ax.set_yticks([0, 1]); ax.set_yticklabels(["Normal", "Anomaly"])
     ax.set_xlabel("Predicted"); ax.set_ylabel("True")
     ax.set_title(f"{title} - Confusion Matrix")
+    plt.colorbar(im, ax=ax, fraction=0.046)
+    plt.tight_layout()
+    save_path.parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(save_path, dpi=80)
+    plt.close()
+    print(f"  ✓ {save_path.name}")
+
+
+def _save_multiclass_confusion_matrix(cm: np.ndarray, title: str, save_path: Path) -> None:
+    """5×5 多分类混淆矩阵（固定大类标签）。"""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    labels = ["DoS", "Normal", "Probe", "R2L", "U2R"]
+    fig, ax = plt.subplots(figsize=(6, 5))
+    im = ax.imshow(cm, cmap="Blues")
+    for i in range(5):
+        for j in range(5):
+            ax.text(j, i, f"{cm[i, j]}", ha="center", va="center",
+                    fontsize=10, fontweight="bold")
+    ax.set_xticks(range(5)); ax.set_xticklabels(labels, rotation=45, ha="right")
+    ax.set_yticks(range(5)); ax.set_yticklabels(labels)
+    ax.set_xlabel("Predicted"); ax.set_ylabel("True")
+    ax.set_title(f"{title} - Confusion Matrix (5-Class)")
     plt.colorbar(im, ax=ax, fraction=0.046)
     plt.tight_layout()
     save_path.parent.mkdir(parents=True, exist_ok=True)
@@ -397,19 +412,19 @@ def _generate_report(
     figure_paths: dict[str, str],
     report_path: Path,
 ) -> None:
-    """生成 9 章对比分析报告（Markdown）。"""
+    """生成 8 章对比分析报告（Markdown）。"""
     lines: list[str] = []
     lines.append("# NSL-KDD 模型对比分析报告")
     lines.append("")
-    lines.append("> **M5 对比分析** | 自动生成 | 基于统一测试集 (22,544 样本)")
+    lines.append("> **M5 对比分析** | 自动生成 | 基于 5 大类多分类 (DoS/Normal/Probe/R2L/U2R)")
     lines.append("")
 
     # §1 概述
     lines.append("## 1. 概述")
     lines.append("")
     lines.append(
-        "本报告在统一测试集上对全部 10 个模型进行横向对比评估。"
-        "评估维度包括二分类（6 个模型）和多分类（4 个模型，含 SMOTE 实验）。"
+        "本报告在统一测试集上对全部 9 个模型进行横向对比评估。"
+        "评估维度包括二分类（6 个模型）和多分类（3 个模型）。"
     )
     lines.append("")
 
@@ -432,21 +447,19 @@ def _generate_report(
 
     lines.append("### 2.2 多分类")
     lines.append("")
-    lines.append("| 模型 | Accuracy (Full) | Known-Class Accuracy | F1 Macro |")
-    lines.append("|------|-----------------|---------------------|----------|")
+    lines.append("| 模型 | Accuracy | F1 Macro |")
+    lines.append("|------|----------|----------|")
     for name in ["dt_multiclass", "rf_multiclass", "mlp_multiclass"]:
         if name in all_metrics:
             m = all_metrics[name]
             label = name.replace("_multiclass", "")
             lines.append(
-                f"| {label} | {m.get('full_accuracy', 0):.4f} "
-                f"| {m.get('known_class_accuracy', 0):.4f} "
+                f"| {label} | {m.get('accuracy', 0):.4f} "
                 f"| {m.get('f1_macro', 0):.4f} |"
             )
     lines.append("")
     lines.append(
-        "> ⚠️ 测试集含 15 种训练未见攻击类型（label 23-37），"
-        "全量准确率上限受此限制。已知类准确率已过滤这些未见类。"
+        "> 基于 5 大类（DoS, Normal, Probe, R2L, U2R）的多分类评估。"
     )
     lines.append("")
 
@@ -460,6 +473,15 @@ def _generate_report(
         if fig_key in figure_paths:
             lines.append(f"![{label} Confusion Matrix](../{figure_paths[fig_key]})")
             lines.append(f"*{label} 二分类混淆矩阵*")
+            lines.append("")
+
+    lines.append("多分类混淆矩阵（5 大类：DoS, Normal, Probe, R2L, U2R）：")
+    lines.append("")
+    for prefix, label in [("dt", "DT"), ("rf", "RF"), ("mlp", "MLP")]:
+        fig_key = f"confusion_{prefix}_multiclass"
+        if fig_key in figure_paths:
+            lines.append(f"![{label} Multiclass Confusion Matrix](../{figure_paths[fig_key]})")
+            lines.append(f"*{label} 多分类混淆矩阵*")
             lines.append("")
 
     # §4 攻击大类 F1
@@ -523,31 +545,8 @@ def _generate_report(
     )
     lines.append("")
 
-    # §8 SMOTE
-    lines.append("## 8. SMOTE 失败实验分析")
-    lines.append("")
-    if "mlp_multiclass_smote" in all_metrics:
-        m_smote = all_metrics["mlp_multiclass_smote"]
-        m_base = all_metrics.get("mlp_multiclass", {})
-        lines.append("| 指标 | MLP 多分类基线 | MLP+SMOTE | 变化 |")
-        lines.append("|------|-------------|-----------|------|")
-        for key, label in [("full_accuracy", "Full Accuracy"),
-                           ("known_class_accuracy", "Known Accuracy")]:
-            base_v = m_base.get(key, 0)
-            smote_v = m_smote.get(key, 0)
-            lines.append(
-                f"| {label} | {base_v:.4f} | {smote_v:.4f} "
-                f"| {smote_v - base_v:+.4f} |"
-            )
-        lines.append("")
-        lines.append(
-            "> ⚠️ SMOTE 在本项目中效果负面，多分类准确率大幅下降。"
-            "详细分析见优化记录 O-NN-01。SMOTE 不纳入主对比图表。"
-        )
-    lines.append("")
-
-    # §9 结论
-    lines.append("## 9. 总结与局限")
+    # §8 结论
+    lines.append("## 8. 总结与局限")
     lines.append("")
     lines.append("### 核心结论")
     lines.append("")
@@ -560,18 +559,14 @@ def _generate_report(
         "在 accuracy/f1/auc 上均超越 DT/RF"
     )
     lines.append(
-        "3. **多分类仍受限于 unseen attacks**：所有模型的多分类"
-        "全量准确率均低于 0.11，核心瓶颈是测试集包含 15 种训练未见攻击"
-    )
-    lines.append(
-        "4. **SMOTE 失败**：过采样在本数据集上产生负面效果，不推荐使用"
+        "3. **多分类性能**：基于 5 大类（DoS, Normal, Probe, R2L, U2R）"
+        "的多分类 F1 Macro 反映了模型在攻击类型识别上的综合能力。"
     )
     lines.append("")
     lines.append("### 局限")
     lines.append("")
     lines.append(
-        "- 测试集 label 空间（38 类）与训练集（23 类）不匹配，"
-        "15 类完全未见 → 多分类上限受限"
+        "- 多分类评估基于 5 大类攻击，无法反映细粒度攻击类型的识别差异"
     )
     lines.append("- 未进行统计显著性检验（McNemar's test 等）→ 未来工作")
     lines.append("- 未测量推理延迟 → 未来工作")
@@ -610,7 +605,7 @@ def main() -> None:
     _, label_id_to_category = derive_label_mapping()
     print(f"  Categories: {sorted(set(label_id_to_category.values()))}")
 
-    # ── Step 3: Load all 10 models ──
+    # ── Step 3: Load all 9 models ──
     banner("Step 3: Loading all models")
     models = load_all_models()
     print(f"\n  Total models loaded: {len(models)}")
@@ -650,31 +645,17 @@ def main() -> None:
     # ── Step 5: Multiclass evaluation (3 models) ──
     banner("Step 5: Multiclass classification evaluation")
     multiclass_results: dict[str, dict] = {}
-    unseen_ids = tuple(range(23, 38))  # classes 23-37 never seen in training
 
     for name in ["dt_multiclass", "rf_multiclass", "mlp_multiclass"]:
         if name not in models:
             continue
         model = models[name]
         y_pred = np.asarray(model.predict(X_test_multi)).ravel()
-        metrics = compute_multiclass_metrics(y_test_multi_np, y_pred, unseen_ids)
+        metrics = compute_multiclass_metrics(y_test_multi_np, y_pred)
         multiclass_results[name] = metrics
         print(
             f"  {name}: full_acc={metrics['full_accuracy']:.4f} "
-            f"known_acc={metrics['known_class_accuracy']:.4f}"
-        )
-
-    # ── Step 6: SMOTE evaluation (separate) ──
-    banner("Step 6: SMOTE model evaluation (separate)")
-    smote_results: dict[str, dict] = {}
-    if "mlp_multiclass_smote" in models:
-        model = models["mlp_multiclass_smote"]
-        y_pred = np.asarray(model.predict(X_test_multi)).ravel()
-        metrics = compute_multiclass_metrics(y_test_multi_np, y_pred, unseen_ids)
-        smote_results["mlp_multiclass_smote"] = metrics
-        print(
-            f"  mlp_smote: full_acc={metrics['full_accuracy']:.4f} "
-            f"known_acc={metrics['known_class_accuracy']:.4f}"
+            f"f1_macro={metrics['f1_macro']:.4f}"
         )
 
     # ── Step 7: Generate 7 comparison figures ──
@@ -691,6 +672,17 @@ def main() -> None:
             save_path = FIGURES_DIR / f"09_confusion_matrix_{prefix}.png"
             _save_confusion_matrix(cm, title, save_path)
             figure_paths[f"confusion_{prefix}_binary"] = str(save_path)
+
+    # 7.1b  Confusion matrices (multiclass: DT, RF, MLP) — 5×5
+    for name, title in [("dt_multiclass", "DT"), ("rf_multiclass", "RF"),
+                        ("mlp_multiclass", "MLP")]:
+        if name in models:
+            y_pred = np.asarray(models[name].predict(X_test_multi)).ravel()
+            cm = confusion_matrix(y_test_multi_np, y_pred)
+            prefix = name.split("_")[0]
+            save_path = FIGURES_DIR / f"09_confusion_matrix_{prefix}_multiclass.png"
+            _save_multiclass_confusion_matrix(cm, title, save_path)
+            figure_paths[f"confusion_{prefix}_multiclass"] = str(save_path)
 
     # 7.2  F1 by attack category
     f1_dicts: dict[str, dict[str, float]] = {}
@@ -757,7 +749,6 @@ def main() -> None:
     all_metrics = {}
     all_metrics.update(binary_results)
     all_metrics.update(multiclass_results)
-    all_metrics.update(smote_results)
     with open(ROOT / "outputs" / "metrics_m5.json", "w") as f:
         json.dump(all_metrics, f, indent=2, default=str)
     print(f"  ✓ Saved outputs/metrics_m5.json ({len(all_metrics)} models)")
