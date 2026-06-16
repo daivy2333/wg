@@ -140,8 +140,8 @@ wg/
 
 - **仓库状态**: ✅ 已初始化
 - **当前分支**: main
-- **最近提交**: 58237a8 — fix(m7): polish paper（引用补充、排版修正、作者信息）
-- **项目状态**: M1-M7 全部完成 ✅（7/7 里程碑），XeLaTeX 编译通过，终稿润色完成
+- **最近提交**: 1ffee8d — fix(paper): correct multi-class from 23-class to 40-class description
+- **项目状态**: M1-M7 全部完成 ✅（7/7 里程碑），XeLaTeX 编译通过，终稿审核完成
 
 ---
 

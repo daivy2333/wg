@@ -1,6 +1,6 @@
 # Learned Spec
 
-> Version: 1.5.0 | Last Updated: 2026-06-14（M7 CJC模板排版完成，项目 M1-M7 全部完结）
+> Version: 1.5.0 | Last Updated: 2026-06-14（M7 CJC模板完成 + 终稿审核，项目 M1-M7 全部完结）
 
 ## Purpose
 
@@ -421,3 +421,24 @@ def predict(self, x):
 - **解决**: 将所有 `\includegraphics[width=\textwidth]` 改为 `[width=\columnwidth]`。在 CJC 单栏布局下 `\columnwidth` 与 `\textwidth` 语义相同但缩放计算更可靠
 - **预防**: 跨模板迁移论文时，图片宽度优先使用 `\columnwidth` 而非 `\textwidth`
 - **关联**: M7-CJC模板迁移、O-M7-03
+
+<!-- 踩坑-010 -->
+### 踩坑-010: CJC 双栏模板下 `figure*[H]` 静默丢弃图片
+
+- **症状**: 编译无报错但图1-3完全不显示，PDF中图片位置为空白
+- **根因**: `float` 包不支持在双栏模式（twocolumn）下对 `figure*` 使用 `[H]` 放置参数。`figure*` 只能接受 `[t]`（页顶）或 `[p]`（独立页）。使用 `[H]` 时 float 包静默丢弃图片，不产生任何警告
+- **解决**: 所有 `figure*[H]` → `figure*[t]`，`figure[H]` → `figure[htbp]`，`table[H]` → `table[htbp]`
+- **预防**: 双栏 LaTeX 中永远不对 `figure*`/`table*` 使用 `[H]`；单栏 `figure`/`table` 的 `[H]` 在双栏下也可能导致文本重叠
+- **关联**: M7-CJC排版修复
+
+<!-- 踩坑-011 -->
+### 踩坑-011: NSL-KDD 多分类 LabelEncoder 映射一致性
+
+- **排查背景**: 多分类准确率极低（DT 4.6%、MLP 10.1%），怀疑训练/测试标签编码不一致导致指标失真
+- **根因排查**: 
+  1. `make_labels(task="multiclass")` 每次调用创建新 `LabelEncoder`，训练和测试各调用一次
+  2. sklearn `LabelEncoder.fit_transform()` 按字母序排序 → 训练集 23 类、测试集 38 类
+  3. 验证：训练标签 0-22 与测试标签 0-22 映射到相同攻击名（字母序保证前缀一致），23-37 为测试独有
+- **结论**: 编码**完全一致**，低准确率是 NSL-KDD 数据集固有特性（15 类未见攻击 + 极端类不平衡），非代码缺陷
+- **预防**: 多分类任务中验证标签编码一致性：`set(y_train.unique()) == set(y_test.unique()) & set(y_train.unique())`
+- **关联**: 终稿审核
