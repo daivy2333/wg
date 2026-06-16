@@ -52,35 +52,35 @@ RF Top-20筛选 & 20 & 按重要度排序取前20 \\
 
 处理完成后的数据以pickle格式持久化，保存于\texttt{outputs/processed/}目录下，共生成8个文件，分别对应训练集与测试集的特征矩阵与标签向量的二分类与五分类版本，便于后续模型加载使用。
 
-\begin{figure*}[t]
+\begin{figure*}
 \centering
 \includegraphics[width=\textwidth]{04_numeric_distributions.png}
 \caption{数值特征分布}
 \label{fig:ch2-numeric-dist}
 \end{figure*}
 
-\begin{figure*}[t]
+\begin{figure*}
 \centering
 \includegraphics[width=\textwidth]{05_categorical_top10.png}
 \caption{分类特征Top-10分布}
 \label{fig:ch2-categorical}
 \end{figure*}
 
-\begin{figure*}[t]
+\begin{figure*}
 \centering
 \includegraphics[width=\textwidth]{06_correlation_heatmap.png}
 \caption{数值特征相关系数热力图}
 \label{fig:ch2-correlation}
 \end{figure*}
 
-\begin{figure*}[t]
+\begin{figure*}
 \centering
 \includegraphics[width=\textwidth]{07_log1p_before_after.png}
 \caption{log1p变换前后分布对比}
 \label{fig:ch2-log1p}
 \end{figure*}
 
-\begin{figure*}[t]
+\begin{figure*}
 \centering
 \includegraphics[width=\textwidth]{08_feature_importance_top20.png}
 \caption{随机森林Top-20特征重要度}
