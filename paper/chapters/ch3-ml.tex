@@ -1,0 +1,178 @@
+% !TEX root = ../main.tex
+% ============================================================================
+% Chapter 3: 传统机器学习模型
+% 涵盖决策树 (DT) 与随机森林 (RF) 的基线、网格搜索调优、多分类实验
+% 数据来源: outputs/ 下模型评估 JSON
+% ============================================================================
+
+\section{传统机器学习模型}
+
+本章基于第 2 章预处理后的训练与测试数据，
+对比评估两类经典的传统机器学习方法：决策树 (Decision Tree, DT) 与随机森林 (Random Forest, RF) \cite{scikit-learn}。
+两类模型均采用二分类 (Normal vs Anomaly) 与多分类 (5 大攻击类别) 两种任务设置，
+并通过网格搜索 (Grid Search) 在验证集上对超参数进行系统调优。
+
+\subsection{决策树}
+
+决策树是一种基于特征阈值递归划分样本空间的非参数监督学习方法，
+其核心思想是在每个内部节点选择信息增益 (或基尼不纯度) 最大的特征进行分裂，
+直至叶节点对应的子集足够纯净。
+模型易于解释、可视化，但单棵树容易过拟合，且对类别不平衡较为敏感。
+
+\subsubsection{二分类实验}
+
+以基尼不纯度为默认准则，最大深度不限，构建二分类基线模型。
+基线在统一测试集上达到 acc=0.7634、f1=0.7452、AUC=0.7704。
+随后在验证集上以 5 折交叉验证进行网格搜索，超参数空间为：
+最大深度 $\mathrm{max\_depth} \in \{5, 10, 15, 20, \mathrm{None}\}$、
+最小分裂样本数 $\mathrm{min\_samples\_split} \in \{2, 5, 10\}$、
+分裂准则 $\mathrm{criterion} \in \{\mathrm{gini}, \mathrm{entropy}\}$，
+共 30 种组合。
+最优参数组合为 $\mathrm{criterion}=\mathrm{entropy}$、$\mathrm{max\_depth}=20$、
+$\mathrm{min\_samples\_split}=2$，
+调优后测试集指标提升至 acc=0.7755、precision=0.9604、recall=0.6317、
+f1=0.7621、AUC=0.7821。
+
+调优带来约 1.2 个百分点的准确率提升和 1.7 个百分点的 F1 提升，
+说明适度增加树的深度并改用信息熵准则有助于捕捉更细粒度的攻击模式。
+但 recall 仍偏低 (0.6317)，意味着约 37\% 的真实异常流量被漏报，
+这是后续工作的改进重点。
+
+\subsubsection{多分类实验}
+
+将上述最优决策树直接应用于 5 大攻击类别的多分类任务，
+测试集准确率为 acc=0.743、macro-F1=0.488。
+该数值为 5 类随机猜测基线 $1/5=20\%$ 的 3.7 倍。
+R2L 和 U2R 类别因训练样本极少（分别仅 995 和 52 条），F1 显著低于 DoS 和 Normal，
+反映了类别不平衡对多分类的显著制约。
+图9 给出了 DT 在二分类任务上的混淆矩阵热力图，
+可见正常样本被大量正确识别 (深蓝主对角线)，但攻击侧的假阴性比例仍然偏高。
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\columnwidth]{09_confusion_matrix_dt.png}
+  \caption{决策树二分类混淆矩阵}
+  \label{fig:cm-dt}
+\end{figure}
+
+\subsection{随机森林}
+
+随机森林是基于 Bagging 框架的集成学习方法，
+通过对训练集进行有放回抽样 (Bootstrap) 训练多棵决策树，
+并在每棵树的节点分裂时随机选取特征子集，
+最终以投票 (分类) 或平均 (回归) 方式聚合预测结果 \cite{scikit-learn}。
+其优势在于：通过集成显著降低单棵决策树的方差，提升泛化能力；
+同时通过特征重要度 (Feature Importance) 提供模型可解释性。
+
+\subsubsection{二分类实验}
+
+基线配置为 100 棵最大深度不限的子树，统一测试集指标为
+acc=0.7083、f1=0.6671、AUC=0.8989。
+尽管准确率略低于决策树基线，AUC 显著高出 12.8 个百分点，
+已体现出集成的判别力优势。
+网格搜索空间为：
+$\mathrm{n\_estimators} \in \{100, 200, 300\}$、
+$\mathrm{max\_depth} \in \{10, 15, 20, \mathrm{None}\}$、
+$\mathrm{min\_samples\_split} \in \{2, 5\}$，共 24 种组合。
+最优参数为 $\mathrm{n\_estimators}=300$、$\mathrm{max\_depth}=20$，
+调优后测试集指标为 acc=0.7234、precision=0.9602、recall=0.5363、
+f1=0.6882、AUC=0.9150。
+增加子树数量与限制深度带来了准确率 1.5 个百分点和 AUC 1.6 个百分点的提升，
+但与决策树类似，recall 仍仅为 0.5363，模型倾向保守预测。
+
+\subsubsection{特征重要度分析}
+
+随机森林的 Gini 重要度 (Mean Decrease in Gini) 为我们提供了宝贵的可解释性视角。
+表2 列出了重要度 Top-10 的特征，
+完整 Top-20 分布如图10 所示。
+
+\begin{table}[htbp]
+  \centering
+  \caption{随机森林特征重要度 Top-10}
+  \label{tab:rf-importance}
+  \small
+  \begin{tabular}{clc}
+    \toprule
+    排名 & 特征名 & 重要度 \\
+    \midrule
+    1 & flag\_SF                & 0.1479 \\
+    2 & src\_bytes              & 0.0924 \\
+    3 & dst\_bytes              & 0.0786 \\
+    4 & same\_srv\_rate         & 0.0651 \\
+    5 & dst\_host\_srv\_count   & 0.0587 \\
+    6 & dst\_host\_same\_srv\_rate & 0.0523 \\
+    7 & count                   & 0.0481 \\
+    8 & service                 & 0.0442 \\
+    9 & dst\_host\_count         & 0.0398 \\
+    10 & protocol\_type          & 0.0356 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure*}
+  \centering
+  \includegraphics[width=\textwidth]{08_feature_importance_top20.png}
+  \caption{随机森林特征重要度 Top-20 分布}
+  \label{fig:rf-importance}
+\end{figure*}
+
+\subsubsection{多分类实验}
+
+与决策树情况相同，RF 多分类测试集 acc=0.737、macro-F1=0.476，
+较 5 类随机基线提升显著。
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\columnwidth]{09_confusion_matrix_rf.png}
+  \caption{随机森林二分类混淆矩阵}
+  \label{fig:cm-rf}
+\end{figure}
+
+\subsection{模型对比与局限}
+
+表3 给出了 DT 与 RF 在基线和调优后的二分类性能横向对比。
+
+\begin{table*}[htbp]
+  \centering
+  \caption{决策树与随机森林二分类性能对比}
+  \label{tab:dt-rf-compare}
+  \small
+  \begin{tabular}{lccccc}
+    \toprule
+    模型配置 & acc & precision & recall & f1 & AUC \\
+    \midrule
+    DT 基线         & 0.7634 & 0.9602 & 0.6093 & 0.7452 & 0.7704 \\
+    DT 调优后       & 0.7755 & 0.9604 & 0.6317 & 0.7621 & 0.7821 \\
+    RF 基线         & 0.7083 & 0.9551 & 0.5169 & 0.6671 & 0.8989 \\
+    RF 调优后       & 0.7234 & 0.9602 & 0.5363 & 0.6882 & 0.9150 \\
+    \bottomrule
+  \end{tabular}
+\end{table*}
+
+从对比中可以提炼三条关键观察：
+
+第一，\textbf{验证集与测试集存在显著性能鸿沟}。
+在训练分布内的交叉验证中，DT 的 CV-f1 约为 0.77，RF 的 CV-f1 高达 0.99，看似接近完美，
+但统一测试集上 DT 与 RF 的 f1 分别仅为 0.76 和 0.69，下降幅度达 10-30 个百分点。
+这一鸿沟源于训练集与测试集的攻击类别分布不同——
+测试集刻意保留了 15 种训练集未见的攻击类型以模拟真实部署环境，
+使得任何在封闭训练集上过拟合的模型都会在测试集上严重贬值。
+
+第二，\textbf{RF 在 AUC 上优于 DT，但准确率反低}。
+RF 调优后的 AUC=0.9150 比 DT 的 0.7821 高出 13 个百分点，
+说明集成方法在概率排序层面具有更强的判别能力；
+但 RF 的 recall (0.5363) 低于 DT (0.6317)，导致准确率和 F1 反而落后。
+该现象提示我们：在阈值敏感的实际部署中，仅看 AUC 不够，
+需要根据业务对漏报与误报的容忍度选择合适的决策阈值。
+
+第三，\textbf{多分类任务在 5 类别设定下取得了有意义的分类结果}。
+DT 与 RF 的多分类准确率分别为 74.3\% 和 73.7\%，较 5 类随机基线（20\%）提升显著。
+R2L 与 U2R 类别的 F1 仍明显偏低，根源在于训练样本的极度稀缺（U2R 仅 52 条），
+这暴露出类别不平衡问题对监督学习的显著制约。
+
+综合上述分析，传统机器学习在二分类异常检测上具有可用价值
+(尤以 RF 的 AUC 与特征可解释性突出)，
+但其无法应对未知攻击类型的多分类需求。
+为突破上述瓶颈，第 4 章将引入神经网络方法，
+通过端到端的特征学习与分布式表示，
+尝试提升模型对未知攻击模式的泛化能力。
