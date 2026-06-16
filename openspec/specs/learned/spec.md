@@ -477,3 +477,24 @@ def predict(self, x):
   - 实验设计阶段应优先选择与论文叙事一致的分类粒度
   - 发现问题早于论文定稿更好——M7 已发现但先存档了 40 类分析，M8 才切换
   - 5 类后处理验证是低成本的决策依据：跑一次就知道改标签能不能救，不用猜
+
+### 踩坑-013: mlp_multiclass_best.pt 实际是 53 维输入，evaluate_m5.py 配置为 20 维（M8 发现）
+
+- **症状**:
+  - `outputs/metrics_m5.json` 中缺失 `mlp_multiclass` 键（dt_multiclass/rf_multiclass 都有）
+  - `outputs/figures/` 缺少 `09_confusion_matrix_mlp_multiclass.png`
+  - 论文中 7 处 MLP 多分类指标（accuracy=0.810, F1_macro=0.718, 各类别 F1）看似无数据源
+- **根因**（Karpathy 暴露的经典"模型 kwargs 不匹配"）:
+  - `mlp_multiclass_best.pt` 的 state_dict 实际维度：`net.0.weight=(128,53)`, `net.3.weight=(64,128)`, `net.6.weight=(5,64)`
+  - 即输入 53 维 + 隐藏层 (128, 64)
+  - 但 `scripts/evaluate_m5.py` 的 `MODEL_CONFIGS` 错误写成 `input_dim=20, hidden_dims=(128, 128)`
+  - 加载时 `RuntimeError: size mismatch` 失败，被 try/except 吞掉，metrics_m5.json 中未写入
+- **修复**（2026-06-16 完成）:
+  - `scripts/evaluate_m5.py:64` 修正为 `{"input_dim": 53, "output_dim": 5, "hidden_dims": (128, 64)}`
+  - 新增一次性补丁脚本 `scripts/patch_mlp_multiclass.py`，补 metrics_m5.json + 生成缺失的混淆矩阵图
+  - 验证：所有 7 个论文数字与实际评估 100% 匹配（accuracy=0.8103, F1_macro=0.7178, DoS=0.883, Normal=0.824, Probe=0.745, R2L=0.575, U2R=0.563）
+- **教训**:
+  - **论文先于代码定稿时**极易出现"代码已能跑但 metrics 缺数据"的死局——先看 metrics 文件再信论文数字
+  - **训练脚本和评估脚本的 model kwargs 必须集中定义**：M4 训练时 hidden_dims 来自 `train_mlp_multiclass` 默认参数 `(128, 64)`，评估脚本却硬编码了另一组 `(128, 128)`，缺少单一事实来源
+  - **try/except 吞错 + 仅 print 警告**是危险模式——`load_torch_model` 失败后脚本继续执行并保存 metrics，但 mlp_multiclass 默默消失，下次跑又踩同一个坑
+  - **Always trust the state_dict, not the config**：遇到 size mismatch 时，先 `torch.load()` 看实际 shape，再改 kwargs，不要猜

@@ -1,8 +1,9 @@
 # SNAPSHOT.md — 项目状态快照
 
 > Last Updated: 2026-06-16
-> **M1-M7 全部完成** ✅ 🎉 | **M8 五分类重构已规划**
+> **M1-M8 全部完成** ✅ 🎉 | **Paper 内部一致性 + 代码 metric 缺口修复**
 > - M8：多分类从 40 类攻击标签改为 5 大类（Normal/DoS/Probe/R2L/U2R），重训模型 + 论文更新
+> - 修复：`evaluate_m5.py` 配置错误导致 `mlp_multiclass` 数据缺失；10 处 paper 内部不一致（Top-5/章节数/图序号/unseen 数量/衰减数字/per-class F1 精度等）
 
 ---
 
@@ -137,8 +138,7 @@ wg/
 
 - **仓库状态**: ✅ 已初始化
 - **当前分支**: main
-- **最近提交**: b5e9d8b — feat(paper): add 5-category post-hoc analysis to limitations (ch6)
-- **项目状态**: M1-M7 完成 ✅，M8 五分类重构已规划 🔄
+- **项目状态**: M1-M8 全部完成 ✅，本轮修复 paper 内部一致性 + mlp_multiclass 数据缺口
 
 ---
 
@@ -150,7 +150,7 @@ wg/
 | `dataset/archive.zip` | NSL-KDD 数据集 | 14MB，待解压 |
 | `openspec/config.yaml` | OpenSpec 配置 | schema: spec-driven |
 | `openspec/specs/architecture/spec.md` | 架构决策 | 含 5 条 ADR（A01-A05）|
-| `openspec/specs/learned/spec.md` | 学习记忆 | 含 7 条踩坑档案 + 6 个技巧模式（M5 新增踩坑-007）|
+| `openspec/specs/learned/spec.md` | 学习记忆 | 含 13 条踩坑档案 + 6 个技巧模式（M8 新增踩坑-011/012/013）|
 | `openspec/specs/references/spec.md` | 外部参考 | 依赖表 + 学术资源 |
 | `openspec/specs/optimization/spec.md` | 优化记录 | 12 条优化点（M5 新增 O-M5-01）|
 | `scripts/evaluate_m5.py` | M5 编排脚本 | 10 模型加载+评估+图表+报告 |
