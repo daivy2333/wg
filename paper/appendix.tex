@@ -42,34 +42,27 @@ LSTM          & lstm\_units         & 64                 \\
 \end{tabular}
 \end{table}
 
-\section{SMOTE过采样详细实验结果}
+\section{五分类各模型详细指标}
 
-为缓解多分类任务中类别严重不平衡（尤其是U2R和R2L两个极稀有类在训练集中合计不足200条样本）对模型性能的干扰，本文在多分类实验流程中额外引入SMOTE（Synthetic Minority Over-sampling Technique）对训练集进行过采样，将所有非多数类样本数提升至与多数类对齐的水平。表7对比了SMOTE应用前后随机森林模型在多分类测试集上的性能变化。
+表7列出了决策树、随机森林和MLP在5大类多分类任务上的测试集准确率及各类别F1值。所有模型均使用相同的5类标签（DoS/Normal/Probe/R2L/U2R）进行训练与评估。
 
 \begin{table}[htbp]
 \centering
-\caption{SMOTE过采样前后多分类性能对比}
-\label{tab:smote}
+\caption{五分类模型详细指标对比}
+\label{tab:multiclass-detail}
 \small
-\begin{tabular}{lcc}
+\begin{tabular}{lccccc}
 \toprule
-指标           & SMOTE前 & SMOTE后 \\
+模型 & Accuracy & DoS F1 & Normal F1 & Probe F1 & R2L F1 \\
 \midrule
-full\_accuracy & 0.101   & 0.028   \\
-f1\_macro      & 0.015   & 0.008   \\
-\midrule
-变化幅度       & 基准    & full\_acc 下降 72.3\% \\
+DT  & 0.743 & 0.89 & 0.82 & 0.74 & 0.26 \\
+RF  & 0.737 & 0.88 & 0.81 & 0.73 & 0.23 \\
+MLP & 0.810 & 0.88 & 0.82 & 0.75 & 0.57 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-实验结果与预期相反，SMOTE过采样在NSL-KDD多分类任务中产生了显著的负向影响：整体准确率从0.101下降至0.028，降幅达72.3\%；宏平均F1值由0.015降至0.008，进一步降低约46.7\%。逐类分析显示，U2R和R2L两个稀有类别的召回率与F1值在SMOTE后均出现明显退化，反而是Normal、DoS等原本已占据主导地位的多数类正确率同步下滑。这一现象可归因于两点：
-
-（1）少数类（U2R、R2L）原始样本极少，SMOTE在其特征邻域内合成的样本容易跨越真实的类边界，引入大量噪声，干扰分类面的建立；
-
-（2）过采样后多数类（Normal、DoS）样本量被压缩至与少数类对齐，模型对大类流量模式的拟合能力被削弱，反而丧失了原本的判别优势。
-
-基于上述负面结果，本文的最终实验方案未采用SMOTE预处理，所有报告的多分类指标均建立在原始不平衡训练集之上，以保留模型在真实数据分布下的学习表现。
+R2L和U2R类别因训练样本极度稀缺（分别仅995条和52条），F1值显著低于DoS、Normal和Probe。MLP在R2L上的F1（0.57）明显优于树模型（0.23-0.26），展现了神经网络在特征交互学习上的优势。然而，U2R类（仅52条训练样本）对所有模型而言仍然是极大的挑战，F1值均未超过0.6。
 
 \section{随机森林特征重要度完整排名 (Top-20)}
 

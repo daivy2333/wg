@@ -80,11 +80,11 @@ def test_mlp_forward_shape_binary():
 
 
 def test_mlp_forward_shape_multiclass():
-    """前向传播：输入 (8, 20) → 输出 (8, 23)。"""
-    model = MLPClassifier(input_dim=20, output_dim=23)
+    """前向传播：输入 (8, 20) → 输出 (8, 5)。"""
+    model = MLPClassifier(input_dim=20, output_dim=5)
     x = torch.randn(8, 20)
     y = model(x)
-    assert y.shape == (8, 23)
+    assert y.shape == (8, 5)
 
 
 def test_mlp_predict_returns_ndarray():

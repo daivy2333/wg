@@ -50,7 +50,7 @@ print("\nTraining MLP multiclass on SMOTE data (30 epochs)...")
 t0 = time.time()
 result = train_mlp_multiclass(
     X_smote, y_smote, X_val, y_val_multi,
-    num_classes=23, epochs=30, verbose=False,
+    num_classes=5, epochs=30, verbose=False,
 )
 print(f"  Training: {time.time() - t0:.1f}s")
 
@@ -69,7 +69,7 @@ known_acc = float(accuracy_score(y_test_multi[mask], preds[mask])) if mask.any()
 
 # Per-class recall
 per_class_recall = recall_score(
-    y_test_multi, preds, average=None, labels=list(range(23)), zero_division=0
+    y_test_multi, preds, average=None, labels=list(range(5)), zero_division=0
 )
 
 print(f"\n  full_accuracy: {full_acc:.4f}")
@@ -92,7 +92,7 @@ metrics["mlp_multiclass_smote"] = {
     "full_accuracy": full_acc,
     "known_class_accuracy": known_acc,
     "f1_macro": f1_macro,
-    "per_class_recall": {int(i): float(per_class_recall[i]) for i in range(23)},
+    "per_class_recall": {int(i): float(per_class_recall[i]) for i in range(5)},
     "minority_classes": minority_ids,
     "skipped_classes": skipped,
     "n_smote_samples": int(X_smote.shape[0]),
