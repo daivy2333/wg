@@ -10,18 +10,18 @@
 \caption{五分类模型详细指标对比}
 \label{tab:multiclass-detail}
 \small
-\begin{tabular}{lccccc}
+\begin{tabular}{lcccccc}
 \toprule
-模型 & Accuracy & DoS F1 & Normal F1 & Probe F1 & R2L F1 \\
+模型 & Accuracy & DoS F1 & Normal F1 & Probe F1 & R2L F1 & U2R F1 \\
 \midrule
-DT  & 0.743 & 0.89 & 0.82 & 0.74 & 0.26 \\
-RF  & 0.737 & 0.88 & 0.81 & 0.73 & 0.23 \\
-MLP & 0.810 & 0.88 & 0.82 & 0.75 & 0.57 \\
+DT  & 0.743 & 0.89 & 0.82 & 0.74 & 0.26 & 0.08 \\
+RF  & 0.737 & 0.88 & 0.81 & 0.73 & 0.23 & 0.06 \\
+MLP & 0.810 & 0.88 & 0.82 & 0.75 & 0.57 & 0.56 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-R2L和U2R类别因训练样本极度稀缺（分别仅995条和52条），F1值显著低于DoS、Normal和Probe。MLP在R2L上的F1（0.57）明显优于树模型（0.23-0.26），展现了神经网络在特征交互学习上的优势。然而，U2R类（仅52条训练样本）对所有模型而言仍然是极大的挑战，F1值均未超过0.6。
+R2L和U2R类别因训练样本极度稀缺（分别仅995条和52条），F1值显著低于DoS、Normal和Probe。MLP在R2L（0.57）和U2R（0.56）上的F1明显优于树模型（R2L 0.23-0.26，U2R 0.06-0.08），展现了神经网络在特征交互学习上的优势。然而，U2R类对所有模型而言仍然是极大的挑战。
 
 \section{模型超参数完整列表}
 
