@@ -6,19 +6,28 @@
 
 MLP 作为神经网络的基线模型，其架构设计如下：输入层 20 维（与第 2 章特征工程一致），隐藏层依次为 128 和 64，输出层 2 个神经元对应二分类任务，激活函数统一使用 ReLU，并在隐藏层后加入 Dropout(0.3) 以抑制过拟合。训练策略方面，采用 Adam 优化器（学习率 1e-3）、交叉熵损失函数，最大训练轮数 30，并引入 EarlyStopping（patience=5）与 ReduceLROnPlateau 动态学习率调度以提升收敛稳定性。
 
-在验证集上，MLP 二分类结果显著优于随机森林的验证集表现：MLP 准确率 0.9891、F1 值 0.9883、AUC 0.9992、召回率 0.9850，而 RF 在相同验证集上的 F1 约为 0.99。二者在 IID 分布下均接近饱和，神经网络仅展现出边际优势。
+在 hold-out 验证集上，MLP 二分类基线取得优秀指标：准确率 0.9891、F1 值 0.9883、AUC 0.9992、召回率 0.9850。但应注意，此验证集是从训练集按 8:2 随机切分的子集，与训练集分布完全一致（IID），因此该高指标反映的是模型在已知分布上的拟合能力，并不能直接代表对未见攻击的泛化能力。
 
 为挖掘进一步潜力，对 hidden\_dims 与 activation 进行了 6 组合网格搜索。最优组合为 (256, 128, 64) + ReLU，调优后验证集指标为：acc=0.9902，f1=0.9894，AUC=0.9992。相对基线的边际提升不足 0.2 个百分点，说明验证集指标已接近该数据划分下的上限，调优空间有限。
 
 多分类场景下，准确率 81.0\%、F1\_macro=71.8\%，各类别 F1 分别为：DoS=88\%、Normal=82\%、Probe=75\%、R2L=57\%、U2R=56\%。R2L 和 U2R 因训练样本极度稀缺，F1 显著低于 DoS 和 Normal，但相比二分类中验证-测试的巨大落差，5 分类的整体表现更为稳定。
 
-图11 展示了 MLP 的二分类混淆矩阵。可以观察到正常样本被大量正确识别，但攻击侧的假阴性比例仍然偏高，验证了二分类中漏报问题的存在。
+图12 展示了 MLP 在二分类测试集上的混淆矩阵。可以看到，模型对 Normal 类的识别精度很高（实际 9711 条 Normal 中被正确预测为 Normal 的占绝大多数），但攻击侧的假阴性比例明显——大量攻击样本被误判为 Normal，这是当前 0.5777 召回率的直接来源。值得注意的是，模型的高 precision（0.9560）意味着被预测为异常的结果中误报极少，但代价是漏报大量真实攻击，反映出在入侵检测这种"宁误勿漏"需求下的决策阈值尚未最优化。
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\columnwidth]{09_confusion_matrix_mlp.png}
   \caption{MLP 二分类混淆矩阵}
   \label{fig:09_confusion_matrix_mlp}
+\end{figure}
+
+图13 进一步给出 MLP 多分类（5 大类）的混淆矩阵。在 5 类设定下，DoS 与 Normal 类因样本充足且特征分布清晰，识别精度较高（DoS 6069/7460、Normal 9299/9711 被正确分类）。R2L 类有较多被误判为 Normal（1626/2885 漏报），U2R 类因训练样本极少（仅 52 条）大量漏报，仅 36/67 被正确分类。这一结构清晰呈现了"样本量决定识别能力"的级联效应。
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\columnwidth]{09_confusion_matrix_mlp_multiclass.png}
+  \caption{MLP 五分类混淆矩阵}
+  \label{fig:09_confusion_matrix_mlp_multiclass}
 \end{figure}
 
 \subsection{CNN一维卷积网络}
