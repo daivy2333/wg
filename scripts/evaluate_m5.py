@@ -61,7 +61,7 @@ FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 MODEL_CONFIGS: dict[str, tuple] = {
     "mlp_binary_best.pt":      (MLPClassifier, {"input_dim": 20, "output_dim": 2}),
     "mlp_binary_tuned.pt":     (MLPClassifier, {"input_dim": 20, "output_dim": 2, "hidden_dims": (256, 128, 64), "dropout": 0.3}),
-    "mlp_multiclass_best.pt":  (MLPClassifier, {"input_dim": 20, "output_dim": 5, "hidden_dims": (128, 128)}),
+    "mlp_multiclass_best.pt":  (MLPClassifier, {"input_dim": 53, "output_dim": 5, "hidden_dims": (128, 64)}),
     "cnn_binary_best.pt":      (CNN1DClassifier, {"input_length": 20, "output_dim": 2}),
     "lstm_binary_best.pt":     (LSTMClassifier, {"input_size": 20, "output_dim": 2}),
 }
@@ -273,14 +273,19 @@ def _save_multiclass_confusion_matrix(cm: np.ndarray, title: str, save_path: Pat
 def _compute_f1_by_category(
     y_true_multi: np.ndarray,
     y_pred_binary: np.ndarray,
-    label_to_category: dict[int, str],
+    new_label_to_category: dict[int, str],
 ) -> dict[str, float]:
-    """各攻击大类 F1（用多分类 ground truth + 二分类预测）。"""
+    """各攻击大类 F1（用多分类 ground truth + 二分类预测）。
+
+    Args:
+        y_true_multi: 5 类标签（0=DoS, 1=Normal, 2=Probe, 3=R2L, 4=U2R）
+        y_pred_binary: 二分类模型预测（0/1）
+        new_label_to_category: 新标签 id (0-4) → 5 大类名
+    """
     result: dict[str, float] = {}
     y_pred_binary = np.asarray(y_pred_binary).ravel()
-    for category in sorted(set(label_to_category.values())):
-        cat_ids = {k for k, v in label_to_category.items() if v == category}
-        y_true_bin = np.isin(y_true_multi, list(cat_ids)).astype(int)
+    for new_id, category in new_label_to_category.items():
+        y_true_bin = (y_test_multi := y_true_multi == new_id).astype(int)
         result[category] = float(f1_score(y_true_bin, y_pred_binary, zero_division=0))
     return result
 
@@ -603,6 +608,8 @@ def main() -> None:
     # ── Step 2: Load label mappings ──
     banner("Step 2: Loading label mappings")
     _, label_id_to_category = derive_label_mapping()
+    # 新 0-4 标签到 5 大类的映射（与 preprocessor.FIVE_CATEGORIES 顺序一致）
+    new_label_to_category = {0: "DoS", 1: "Normal", 2: "Probe", 3: "R2L", 4: "U2R"}
     print(f"  Categories: {sorted(set(label_id_to_category.values()))}")
 
     # ── Step 3: Load all 9 models ──
@@ -691,7 +698,7 @@ def main() -> None:
         if name in models:
             y_pred = np.asarray(models[name].predict(X_test)).ravel()
             f1_dicts[name] = _compute_f1_by_category(
-                y_test_multi_np, y_pred, label_id_to_category
+                y_test_multi_np, y_pred, new_label_to_category
             )
     if f1_dicts:
         save_path = FIGURES_DIR / "10_f1_by_category.png"
